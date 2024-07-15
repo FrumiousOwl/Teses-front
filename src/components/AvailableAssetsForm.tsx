@@ -13,7 +13,6 @@ type Asset = {
 const initialAssets: Asset[] = [
   { aid: 'AID-001', name: 'Asset 1', dateOfPurchase: '2022-01-01', deployed: 2, available: 7 },
   { aid: 'AID-002', name: 'Asset 2', dateOfPurchase: '2022-02-15', deployed: 5, available: 9 },
-
 ];
 
 const ITEMS_PER_PAGE = 3; // Set the number of items per page
@@ -24,7 +23,9 @@ const AvailableAssetsForm: React.FC = () => {
 
   const handleSearch = (query: string) => {
     const filtered = initialAssets.filter(asset =>
-      asset.name.toLowerCase().includes(query.toLowerCase())
+      asset.aid.toLowerCase().includes(query.toLowerCase()) ||
+      asset.name.toLowerCase().includes(query.toLowerCase()) ||
+      asset.dateOfPurchase.includes(query)
     );
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search
@@ -51,7 +52,7 @@ const AvailableAssetsForm: React.FC = () => {
       <div className={styles.search}>
         <TextInput
           className={styles.searchInput}
-          placeholder="Search by asset name"
+          placeholder="Search by AID, name or date of purchase"
           onChange={(e) => handleSearch(e.currentTarget.value)}
         />
       </div>

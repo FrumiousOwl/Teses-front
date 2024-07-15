@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import { Paper, Table, TextInput, Title, ScrollArea, ActionIcon, Button, Modal, Pagination } from '@mantine/core';
+import { Paper, Table, TextInput, Title, ScrollArea, ActionIcon, Button, Modal, Pagination, Notification } from '@mantine/core';
 import { IconEdit, IconTrash, IconFileExport, IconPlus } from '@tabler/icons-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -20,6 +20,7 @@ export function SRRFForm() {
   const [search, setSearch] = useState('');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [notification, setNotification] = useState({ message: '', show: false });
   const [currentEdit, setCurrentEdit] = useState<any>(null);
   const [newForm, setNewForm] = useState<any>({
     dateNeeded: '',
@@ -42,12 +43,16 @@ export function SRRFForm() {
   };
 
   const handleSaveEdit = () => {
+    if (!validateForm(currentEdit)) return;
+
     setData(data.map((d) => (d.rid === currentEdit.rid ? currentEdit : d)));
     setEditModalOpen(false);
+    showNotification('Form successfully edited');
   };
 
   const handleDelete = (rid: number) => {
     setData(data.filter(item => item.rid !== rid));
+    showNotification('Form successfully deleted');
   };
 
   const handleConvertToPDF = async (item: any) => {
@@ -88,6 +93,8 @@ export function SRRFForm() {
   };
 
   const handleSaveNewForm = () => {
+    if (!validateForm(newForm)) return;
+
     const newRid = Math.max(...data.map(d => d.rid)) + 1;
     const newSrrfNo = Math.max(...data.map(d => d.srrfNo)) + 1;
 
@@ -107,12 +114,36 @@ export function SRRFForm() {
       problem: '',
       materialsNeeded: '',
     });
+    showNotification('New form successfully added');
+  };
+
+  const validateForm = (form: any) => {
+    if (
+      !form.dateNeeded ||
+      !form.name ||
+      !form.department ||
+      !form.endUser ||
+      !form.problem ||
+      !form.materialsNeeded
+    ) {
+      showNotification('All fields are required');
+      return false;
+    }
+    return true;
+  };
+
+  const showNotification = (message: string) => {
+    setNotification({ message, show: true });
+    setTimeout(() => setNotification({ message: '', show: false }), 3000);
   };
 
   const filteredData = data.filter((item) =>
+    item.rid.toString().includes(search) ||
+    item.dateNeeded.toLowerCase().includes(search.toLowerCase()) ||
     item.name.toLowerCase().includes(search.toLowerCase()) ||
     item.department.toLowerCase().includes(search.toLowerCase()) ||
-    item.problem.toLowerCase().includes(search.toLowerCase())
+    item.endUser.toLowerCase().includes(search.toLowerCase()) ||
+    item.srrfNo.toString().includes(search)
   );
 
   const paginatedData = filteredData.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
@@ -278,6 +309,15 @@ export function SRRFForm() {
           />
           <Button onClick={handleSaveNewForm}>Save</Button>
         </Modal>
+
+        {notification.show && (
+          <Notification
+            onClose={() => setNotification({ message: '', show: false })}
+            className={classes.notification}
+          >
+            {notification.message}
+          </Notification>
+        )}
       </Paper>
     </div>
   );

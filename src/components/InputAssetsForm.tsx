@@ -38,7 +38,9 @@ const InputAssetsForm: React.FC = () => {
 
   const handleSearch = (query: string) => {
     const filtered = assets.filter(asset =>
-      asset.name.toLowerCase().includes(query.toLowerCase())
+      asset.iid.toString().includes(query) ||
+      asset.name.toLowerCase().includes(query.toLowerCase()) ||
+      asset.dateOfPurchase.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
@@ -143,7 +145,7 @@ const InputAssetsForm: React.FC = () => {
         <div className={styles.search}>
           <TextInput
             className={styles.searchInput}
-            placeholder="Search by asset name"
+            placeholder="Search by IID, Name or Date of Purchase"
             onChange={(e) => handleSearch(e.currentTarget.value)}
           />
         </div>
