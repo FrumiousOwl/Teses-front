@@ -1,0 +1,93 @@
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #f0f2f5; /* Added background color for better contrast */
+}
+
+.navbar {
+  width: 250px;
+  background-color: #343a40; /* Changed to a darker color for a sleek look */
+  color: #fff; /* Text color to white for better readability */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: width 0.3s; /* Smooth transition for responsive design */
+}
+
+.header {
+  padding: 16px;
+  text-align: center;
+  background-color: #495057; /* Slightly lighter background for the header */
+  color: #fff;
+}
+
+.navbarMain {
+  flex-grow: 1;
+}
+
+.footer {
+  padding: 16px;
+  text-align: center;
+  background-color: #495057; /* Matching footer color with header */
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #adb5bd; /* Light gray color for unselected links */
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition for color and background */
+}
+
+.linkIcon {
+  margin-right: 8px;
+  font-size: 1.5rem;
+}
+
+.linkText {
+  display: none; /* Hide text by default for a cleaner look */
+}
+
+.link:hover {
+  background-color: #6c757d; /* Darker background on hover */
+  color: #fff; /* White text on hover */
+}
+
+.link[data-active='true'],
+.link.active {
+  background-color: #007bff; /* Blue background for active links */
+  color: #fff;
+  font-weight: bold;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto; /* Added scroll for overflow content */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    width: 80px;
+  }
+  .linkIcon {
+    margin-right: 0;
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+  .linkText {
+    display: none;
+  }
+  .footer {
+    padding: 8px; /* Reduced padding for smaller screens */
+  }
+}
+
+@media (min-width: 768px) {
+  .linkText {
+    display: inline; /* Show text on larger screens */
+  }
+}
