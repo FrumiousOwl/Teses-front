@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Table, Modal, Pagination } from '@mantine/core';
 import styles from './InputAssetsForm.module.css';
+import { useApi } from '../service/apiService';
 
 type Asset = {
   iid: number;
@@ -11,6 +12,10 @@ type Asset = {
   defective: number;
   quantity: number;
 };
+
+const api=useApi()
+
+
 
 const ITEMS_PER_PAGE = 5;
 
@@ -35,6 +40,14 @@ const InputAssetsForm: React.FC = () => {
     quantity: 0,
   });
   const [activePage, setActivePage] = useState(1);
+  const [assetData, setAssetData ] = useState(null);
+  useEffect(() => {
+  
+    const fetchAsset= async () => {
+      const data = await api.get(`localhost:7234/apiAsset`)
+      setAssetData (data)
+  
+  }, [assetData])
 
   const handleSearch = (query: string) => {
     const filtered = assets.filter(asset =>
@@ -45,6 +58,7 @@ const InputAssetsForm: React.FC = () => {
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
   };
+  
 
   const handleAddAsset = () => {
     const calculatedQuantity = newForm.deployed + newForm.available + newForm.defective;
@@ -266,3 +280,7 @@ const InputAssetsForm: React.FC = () => {
 };
 
 export default InputAssetsForm;
+function useEffect(arg0: () => void) {
+  throw new Error('Function not implemented.');
+}
+
