@@ -8,7 +8,7 @@ class CustomAxiosWrapper {
     this.axiosInstance = axiosInstance;
   }
 
-  public async get<ResponseType>(p0: number, p1: { id: any; "": any; }, url: string): Promise<ResponseType> {
+  public async get<ResponseType>(_p0: number, _p1: { id: any; "": any; }, url: string): Promise<ResponseType> {
     const response = await this.axiosInstance.get(url);
     return response.data as ResponseType;
   }
@@ -26,6 +26,11 @@ class CustomAxiosWrapper {
     data: RequestType
   ): Promise<ResponseType> {
     const response = await this.axiosInstance.put(url, data);
+    return response.data as ResponseType;
+  }
+
+  public async delete<ResponseType>(url: string): Promise<ResponseType> {
+    const response = await this.axiosInstance.delete(url);
     return response.data as ResponseType;
   }
 

@@ -1,7 +1,8 @@
+// InputAssetsForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Table, Modal, Pagination } from '@mantine/core';
-import styles from './InputAssetsForm.module.css';
 import { useApi } from '../service/apiService';
+import styles from './InputAssetsForm.module.css';
 
 type Asset = {
   iid: number;
@@ -13,20 +14,11 @@ type Asset = {
   quantity: number;
 };
 
-const api=useApi()
-
-
-
 const ITEMS_PER_PAGE = 5;
 
 const InputAssetsForm: React.FC = () => {
-  const [assets, setAssets] = useState<Asset[]>([
-    { iid: 1, name: 'Asset 1', deployed: 2, available: 7, defective: 1, dateOfPurchase: '2022-01-01', quantity: 10 },
-    { iid: 2, name: 'Asset 2', deployed: 5, available: 9, defective: 1, dateOfPurchase: '2022-02-15', quantity: 15 },
-    // Add more assets as needed
-  ]);
-
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditIndex, setCurrentEditIndex] = useState<number | null>(null);
@@ -40,14 +32,7 @@ const InputAssetsForm: React.FC = () => {
     quantity: 0,
   });
   const [activePage, setActivePage] = useState(1);
-  const [assetData, setAssetData ] = useState(null);
-  useEffect(() => {
-  
-    const fetchAsset= async () => {
-      const data = await api.get(`localhost:7234/apiAsset`)
-      setAssetData (data)
-  
-  }, [assetData])
+  const customAxios = useApi();
 
   const handleSearch = (query: string) => {
     const filtered = assets.filter(asset =>
@@ -58,51 +43,82 @@ const InputAssetsForm: React.FC = () => {
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
   };
-  
 
-  const handleAddAsset = () => {
-    const calculatedQuantity = newForm.deployed + newForm.available + newForm.defective;
-
-    const newAsset: Asset = {
-      ...newForm,
-      quantity: calculatedQuantity,
-      iid: assets.length + 1,
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const data = await customAxios.get<Asset[]>('/assets'); // Adjust the URL as needed
+        setAssets(data);
+        setFilteredAssets(data);
+      } catch (error) {
+        console.error('Error fetching assets:', error);
+      }
     };
 
-    setAssets(prevAssets => [...prevAssets, newAsset]);
-    setFilteredAssets(prevAssets => [...prevAssets, newAsset]);
-    setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
-    setAddModalOpen(false);
-    setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
-  };
+    fetchAssets();
+  }, [customAxios]);
 
-  const handleDeleteAsset = (index: number) => {
-    const newAssets = [...assets];
-    newAssets.splice(index, 1);
-    setAssets(newAssets);
-    setFilteredAssets(newAssets);
+  const handleAddAsset = async () => {
+    try {
+      const calculatedQuantity = newForm.deployed + newForm.available + newForm.defective;
 
-    // Adjust the current page if necessary
-    if (newAssets.length < (activePage - 1) * ITEMS_PER_PAGE) {
-      setActivePage(Math.max(1, activePage - 1)); // Go to the previous page if the current page is empty
+      const newAsset: Asset = {
+        ...newForm,
+        quantity: calculatedQuantity,
+        iid: assets.length + 1,
+      };
+
+      const data = await customAxios.post<Asset, Asset>('/assets', newAsset);
+      setAssets(prevAssets => [...prevAssets, data]);
+      setFilteredAssets(prevAssets => [...prevAssets, data]);
+      setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
+      setAddModalOpen(false);
+      setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
+    } catch (error) {
+      console.error('Error adding asset:', error);
     }
   };
 
-  const handleEditAsset = () => {
-    if (currentEditIndex !== null) {
-      const editedAsset = {
-        ...newForm,
-        quantity: newForm.deployed + newForm.available + newForm.defective,
-      };
+  const handleDeleteAsset = async (index: number) => {
+    try {
+      const assetToDelete = assets[index];
+      await customAxios.delete(`/assets/${assetToDelete.iid}`);
 
       const newAssets = [...assets];
-      newAssets[currentEditIndex] = editedAsset;
-
+      newAssets.splice(index, 1);
       setAssets(newAssets);
       setFilteredAssets(newAssets);
-      setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
-      setEditModalOpen(false);
-      setCurrentEditIndex(null);
+
+      // Adjust the current page if necessary
+      if (newAssets.length < (activePage - 1) * ITEMS_PER_PAGE) {
+        setActivePage(Math.max(1, activePage - 1)); // Go to the previous page if the current page is empty
+      }
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+    }
+  };
+
+  const handleEditAsset = async () => {
+    if (currentEditIndex !== null) {
+      try {
+        const editedAsset = {
+          ...newForm,
+          quantity: newForm.deployed + newForm.available + newForm.defective,
+        };
+
+        const data = await customAxios.put<Asset, Asset>(`/assets/${editedAsset.iid}`, editedAsset);
+
+        const newAssets = [...assets];
+        newAssets[currentEditIndex] = data;
+
+        setAssets(newAssets);
+        setFilteredAssets(newAssets);
+        setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
+        setEditModalOpen(false);
+        setCurrentEditIndex(null);
+      } catch (error) {
+        console.error('Error editing asset:', error);
+      }
     }
   };
 
@@ -280,7 +296,3 @@ const InputAssetsForm: React.FC = () => {
 };
 
 export default InputAssetsForm;
-function useEffect(arg0: () => void) {
-  throw new Error('Function not implemented.');
-}
-
