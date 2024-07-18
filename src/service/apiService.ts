@@ -8,7 +8,7 @@ class CustomAxiosWrapper {
     this.axiosInstance = axiosInstance;
   }
 
-  public async get<ResponseType>(url: string): Promise<ResponseType> {
+  public async get<ResponseType>(p0: number, p1: { id: any; "": any; }, url: string): Promise<ResponseType> {
     const response = await this.axiosInstance.get(url);
     return response.data as ResponseType;
   }
