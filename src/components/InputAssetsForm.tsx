@@ -1,4 +1,3 @@
-// InputAssetsForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Table, Modal, Pagination } from '@mantine/core';
 import { useApi } from '../service/apiService';
@@ -146,7 +145,7 @@ const InputAssetsForm: React.FC = () => {
     setNewForm({ ...newForm, defective });
   };
 
-  const paginatedAssets = filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
+  const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
 
   const rows = paginatedAssets.map((asset, index) => (
     <tr key={index}>
