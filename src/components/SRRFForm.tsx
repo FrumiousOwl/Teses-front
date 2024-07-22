@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { Paper, Table, TextInput, Title, ScrollArea, ActionIcon, Button, Modal, Pagination, Notification } from '@mantine/core';
 import { IconEdit, IconTrash, IconFileExport, IconPlus } from '@tabler/icons-react';
@@ -8,12 +6,32 @@ import html2canvas from 'html2canvas';
 import classes from './SRRFForm.module.css';
 
 export const initialData = [
-  { rid: 222463, dateNeeded: '2024-05-06', name: 'Jonahlyn Eleazar', department: 'UER', endUser: 'DES2296', problem: 'Installed 16gb memory', materialsNeeded: '1pc power cord', srrfNo: 6202406 },
-  { rid: 22583, dateNeeded: '2024-06-09', name: 'Haidee Virador', department: 'VAD', endUser: 'DES2349', problem: '1pc power cord', materialsNeeded: '1pc VGA to DP cable', srrfNo: 6202409 },
+  { rid: 222463, dateNeeded: '06/05/2024', name: 'Jonahlyn Eleazar', department: 'UER', endUser: 'DES2296', problem: 'Installed 16gb memory', materialsNeeded: '1pc power cord', srrfNo: 6202406 },
+  { rid: 22583, dateNeeded: '09/06/2024', name: 'Haidee Virador', department: 'VAD', endUser: 'DES2349', problem: '1pc power cord', materialsNeeded: '1pc VGA to DP cable', srrfNo: 6202409 },
   // Add more data as needed
 ];
 
 const ITEMS_PER_PAGE = 10;
+
+const emptyForm = {
+  rid: '',
+  dateNeeded: '',
+  name: '',
+  department: '',
+  endUser: '',
+  problem: '',
+  materialsNeeded: '',
+};
+
+const formatDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const parseDate = (dateStr: string) => {
+  const [day, month, year] = dateStr.split('/');
+  return `${year}-${month}-${day}`;
+};
 
 export function SRRFForm() {
   const [data, setData] = useState(initialData);
@@ -22,14 +40,7 @@ export function SRRFForm() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [notification, setNotification] = useState({ message: '', show: false });
   const [currentEdit, setCurrentEdit] = useState<any>(null);
-  const [newForm, setNewForm] = useState<any>({
-    dateNeeded: '',
-    name: '',
-    department: '',
-    endUser: '',
-    problem: '',
-    materialsNeeded: '',
-  });
+  const [newForm, setNewForm] = useState<any>(emptyForm);
   const [activePage, setActivePage] = useState(1);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +55,6 @@ export function SRRFForm() {
 
   const handleSaveEdit = () => {
     if (!validateForm(currentEdit)) return;
-
     setData(data.map((d) => (d.rid === currentEdit.rid ? currentEdit : d)));
     setEditModalOpen(false);
     showNotification('Form successfully edited');
@@ -57,8 +67,19 @@ export function SRRFForm() {
 
   const handleConvertToPDF = async (item: any) => {
     const pdf = new jsPDF();
-    const element = document.createElement('div');
+    const element = createPDFElement(item);
+    document.body.appendChild(element);
+    const canvas = await html2canvas(element);
+    const imgData = canvas.toDataURL('image/png');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (pdfWidth * canvas.height) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('srrf_form.pdf');
+    document.body.removeChild(element);
+  };
 
+  const createPDFElement = (item: any) => {
+    const element = document.createElement('div');
     element.innerHTML = `
       <div style="text-align: center; margin-bottom: 20px; font-family: Arial, sans-serif;">
         <h1 style="color: #4a90e2;">Service Requisition and Release Form</h1>
@@ -75,17 +96,7 @@ export function SRRFForm() {
         <p><strong>SRRF No.:</strong> ${item.srrfNo}</p>
       </div>
     `;
-
-    document.body.appendChild(element);
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL('image/png');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('srrf_form.pdf');
-    document.body.removeChild(element);
+    return element;
   };
 
   const handleAdd = () => {
@@ -94,40 +105,21 @@ export function SRRFForm() {
 
   const handleSaveNewForm = () => {
     if (!validateForm(newForm)) return;
-
-    const newRid = Math.max(...data.map(d => d.rid)) + 1;
     const newSrrfNo = Math.max(...data.map(d => d.srrfNo)) + 1;
-
-    const newData = {
-      rid: newRid,
-      srrfNo: newSrrfNo,
-      ...newForm,
-    };
-
+    const newData = { srrfNo: newSrrfNo, ...newForm, dateNeeded: formatDate(newForm.dateNeeded) };
     setData([...data, newData]);
     setAddModalOpen(false);
-    setNewForm({
-      dateNeeded: '',
-      name: '',
-      department: '',
-      endUser: '',
-      problem: '',
-      materialsNeeded: '',
-    });
+    setNewForm(emptyForm);
     showNotification('New form successfully added');
   };
 
   const validateForm = (form: any) => {
-    if (
-      !form.dateNeeded ||
-      !form.name ||
-      !form.department ||
-      !form.endUser ||
-      !form.problem ||
-      !form.materialsNeeded
-    ) {
-      showNotification('All fields are required');
-      return false;
+    const requiredFields = ['rid', 'dateNeeded', 'name', 'department', 'endUser', 'problem', 'materialsNeeded'];
+    for (let field of requiredFields) {
+      if (!form[field]) {
+        showNotification('All fields are required');
+        return false;
+      }
     }
     return true;
   };
@@ -138,12 +130,9 @@ export function SRRFForm() {
   };
 
   const filteredData = data.filter((item) =>
-    item.rid.toString().includes(search) ||
-    item.dateNeeded.toLowerCase().includes(search.toLowerCase()) ||
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    item.department.toLowerCase().includes(search.toLowerCase()) ||
-    item.endUser.toLowerCase().includes(search.toLowerCase()) ||
-    item.srrfNo.toString().includes(search)
+    Object.values(item).some((val) =>
+      val.toString().toLowerCase().includes(search.toLowerCase())
+    )
   );
 
   const paginatedData = filteredData.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
@@ -222,93 +211,26 @@ export function SRRFForm() {
           total={Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
           value={activePage}
           onChange={setActivePage}
-          className={classes.pagination}
-          mt="md"
+          style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}
         />
 
-        <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Form">
-          <div className={classes.label}>Date Needed</div>
-          <input
-            type="date"
-            value={currentEdit?.dateNeeded || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, dateNeeded: e.currentTarget.value })}
-            className={classes.input} // Add any necessary styling classes
-            style={{ marginBottom: '16px' }}
-          />
-          <TextInput
-            label="Name"
-            value={currentEdit?.name || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, name: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Department"
-            value={currentEdit?.department || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, department: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="End User"
-            value={currentEdit?.endUser || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, endUser: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Problem"
-            value={currentEdit?.problem || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, problem: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Materials Needed"
-            value={currentEdit?.materialsNeeded || ''}
-            onChange={(e) => setCurrentEdit({ ...currentEdit, materialsNeeded: e.currentTarget.value })}
-            mb="md"
-          />
-          <Button onClick={handleSaveEdit}>Save</Button>
-        </Modal>
+        <FormModal
+          opened={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          form={currentEdit}
+          setForm={setCurrentEdit}
+          onSave={handleSaveEdit}
+          title="Edit Form"
+        />
 
-        <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add New Form">
-          <div className={classes.label}>Date Needed</div>
-          <input
-            type="date"
-            value={newForm.dateNeeded}
-            onChange={(e) => setNewForm({ ...newForm, dateNeeded: e.currentTarget.value })}
-            className={classes.input} // Add any necessary styling classes
-            style={{ marginBottom: '16px' }}
-          />
-          <TextInput
-            label="Name"
-            value={newForm.name}
-            onChange={(e) => setNewForm({ ...newForm, name: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Department"
-            value={newForm.department}
-            onChange={(e) => setNewForm({ ...newForm, department: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="End User"
-            value={newForm.endUser}
-            onChange={(e) => setNewForm({ ...newForm, endUser: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Problem"
-            value={newForm.problem}
-            onChange={(e) => setNewForm({ ...newForm, problem: e.currentTarget.value })}
-            mb="sm"
-          />
-          <TextInput
-            label="Materials Needed"
-            value={newForm.materialsNeeded}
-            onChange={(e) => setNewForm({ ...newForm, materialsNeeded: e.currentTarget.value })}
-            mb="md"
-          />
-          <Button onClick={handleSaveNewForm}>Save</Button>
-        </Modal>
+        <FormModal
+          opened={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          form={newForm}
+          setForm={setNewForm}
+          onSave={handleSaveNewForm}
+          title="Add New Form"
+        />
 
         {notification.show && (
           <Notification
@@ -322,3 +244,61 @@ export function SRRFForm() {
     </div>
   );
 }
+
+type FormModalProps = {
+  opened: boolean;
+  onClose: () => void;
+  form: any;
+  setForm: React.Dispatch<React.SetStateAction<any>>;
+  onSave: () => void;
+  title: string;
+};
+
+const FormModal = ({ opened, onClose, form, setForm, onSave, title }: FormModalProps) => (
+  <Modal opened={opened} onClose={onClose} title={title}>
+    <TextInput
+      label="RID"
+      value={form?.rid || ''}
+      onChange={(e) => setForm({ ...form, rid: e.currentTarget.value })}
+      mb="sm"
+    />
+    <TextInput
+      label="Date Needed"
+      value={form?.dateNeeded || ''}
+      onChange={(e) => setForm({ ...form, dateNeeded: e.currentTarget.value })}
+      mb="sm"
+      placeholder="DD/MM/YYYY"
+    />
+    <TextInput
+      label="Name"
+      value={form?.name || ''}
+      onChange={(e) => setForm({ ...form, name: e.currentTarget.value })}
+      mb="sm"
+    />
+    <TextInput
+      label="Department"
+      value={form?.department || ''}
+      onChange={(e) => setForm({ ...form, department: e.currentTarget.value })}
+      mb="sm"
+    />
+    <TextInput
+      label="End User"
+      value={form?.endUser || ''}
+      onChange={(e) => setForm({ ...form, endUser: e.currentTarget.value })}
+      mb="sm"
+    />
+    <TextInput
+      label="Problem"
+      value={form?.problem || ''}
+      onChange={(e) => setForm({ ...form, problem: e.currentTarget.value })}
+      mb="sm"
+    />
+    <TextInput
+      label="Materials Needed"
+      value={form?.materialsNeeded || ''}
+      onChange={(e) => setForm({ ...form, materialsNeeded: e.currentTarget.value })}
+      mb="md"
+    />
+    <Button onClick={onSave}>Save</Button>
+  </Modal>
+);

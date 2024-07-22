@@ -1,11 +1,10 @@
-// Report.tsx
 import React, { useState } from 'react';
 import { Paper, Table, TextInput, Title, ScrollArea, Button } from '@mantine/core';
-import { initialData } from './SRRFForm'; // Assuming initialData is exported from SRRFForm
+import { initialData } from './SRRFForm';
 import { IconFileExport } from '@tabler/icons-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import styles from './Reports.module.css'; // Import CSS module
+import styles from './Reports.module.css';
 
 interface ServiceRecord {
   rid: number;
@@ -25,6 +24,7 @@ const Report: React.FC = () => {
   const [yearlyEndDate, setYearlyEndDate] = useState<string>('');
 
   const handleMonthlyReport = () => {
+    if (!monthlyStartDate || !monthlyEndDate) return [];
     const filteredData = initialData.filter(item => {
       const itemDate = new Date(item.dateNeeded);
       const filterStartDate = new Date(monthlyStartDate);
@@ -35,10 +35,12 @@ const Report: React.FC = () => {
   };
 
   const handleYearlyReport = () => {
+    if (!yearlyStartDate || !yearlyEndDate) return [];
     const filteredData = initialData.filter(item => {
-      const itemYear = new Date(item.dateNeeded).getFullYear();
-      const filterYear = new Date(yearlyStartDate).getFullYear();
-      return itemYear === filterYear;
+      const itemDate = new Date(item.dateNeeded);
+      const filterStartDate = new Date(yearlyStartDate);
+      const filterEndDate = new Date(yearlyEndDate);
+      return itemDate >= filterStartDate && itemDate <= filterEndDate;
     });
     return filteredData;
   };
@@ -121,8 +123,8 @@ const Report: React.FC = () => {
     document.body.removeChild(element);
   };
 
-  const monthlyFilteredData = monthlyStartDate && monthlyEndDate ? handleMonthlyReport() : [];
-  const yearlyFilteredData = yearlyStartDate && yearlyEndDate ? handleYearlyReport() : [];
+  const monthlyFilteredData = handleMonthlyReport();
+  const yearlyFilteredData = handleYearlyReport();
 
   return (
     <Paper className={styles.wrapper}>
@@ -134,25 +136,31 @@ const Report: React.FC = () => {
         {/* Monthly Report Date Inputs */}
         <div className={styles.dateInputSection}>
           <Title order={3}>Monthly Report</Title>
-          <TextInput
-            type="date"
-            value={monthlyStartDate}
-            onChange={handleMonthlyStartDateChange}
-            placeholder="Start Date"
-            className={styles.input}
-          />
-          <TextInput
-            type="date"
-            value={monthlyEndDate}
-            onChange={handleMonthlyEndDateChange}
-            placeholder="End Date"
-            className={styles.input}
-          />
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Start Date</label>
+            <TextInput
+              type="date"
+              value={monthlyStartDate}
+              onChange={handleMonthlyStartDateChange}
+              placeholder="Start Date"
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>End Date</label>
+            <TextInput
+              type="date"
+              value={monthlyEndDate}
+              onChange={handleMonthlyEndDateChange}
+              placeholder="End Date"
+              className={styles.input}
+            />
+          </div>
           <Button
             className={styles.button}
             onClick={() => handleExportToPDF(monthlyFilteredData, 'monthly')}
           >
-            <IconFileExport size={16} style={{ marginRight: '8px'}} />
+            <IconFileExport size={16} style={{ marginRight: '8px' }} />
             Export to PDF
           </Button>
         </div>
@@ -160,25 +168,31 @@ const Report: React.FC = () => {
         {/* Yearly Report Date Inputs */}
         <div className={styles.dateInputSection}>
           <Title order={3}>Yearly Report</Title>
-          <TextInput
-            type="date"
-            value={yearlyStartDate}
-            onChange={handleYearlyStartDateChange}
-            placeholder="Start Date"
-            className={styles.input}
-          />
-          <TextInput
-            type="date"
-            value={yearlyEndDate}
-            onChange={handleYearlyEndDateChange}
-            placeholder="End Date"
-            className={styles.input}
-          />
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Start Date</label>
+            <TextInput
+              type="date"
+              value={yearlyStartDate}
+              onChange={handleYearlyStartDateChange}
+              placeholder="Start Date"
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>End Date</label>
+            <TextInput
+              type="date"
+              value={yearlyEndDate}
+              onChange={handleYearlyEndDateChange}
+              placeholder="End Date"
+              className={styles.input}
+            />
+          </div>
           <Button
             className={styles.button}
             onClick={() => handleExportToPDF(yearlyFilteredData, 'yearly')}
           >
-            <IconFileExport size={16} style={{ marginRight: '8px'}} />
+            <IconFileExport size={16} style={{ marginRight: '8px' }} />
             Export to PDF
           </Button>
         </div>

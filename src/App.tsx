@@ -2,7 +2,6 @@ import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthenticationImage } from './components/AuthenticationImage';
-import { FooterSimple } from './components/FooterSimple';
 import { NavbarSegmented } from './components/NavbarSegmented';
 import { SRRFForm } from './components/SRRFForm';
 import InputAssetsForm from './components/InputAssetsForm';
@@ -25,7 +24,6 @@ export default function App() {
           </Route>
         </Routes>
       </Router>
-      <FooterSimple />
     </MantineProvider>
   );
 }
