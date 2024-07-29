@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import { Paper, Table, TextInput, Title, ScrollArea, ActionIcon, Button, Modal, Pagination, Notification } from '@mantine/core';
 import { IconEdit, IconTrash, IconFileExport, IconPlus } from '@tabler/icons-react';
@@ -28,10 +30,6 @@ const formatDate = (dateStr: string) => {
   return `${day}/${month}/${year}`;
 };
 
-const parseDate = (dateStr: string) => {
-  const [day, month, year] = dateStr.split('/');
-  return `${year}-${month}-${day}`;
-};
 
 export function SRRFForm() {
   const [data, setData] = useState(initialData);
@@ -115,7 +113,7 @@ export function SRRFForm() {
 
   const validateForm = (form: any) => {
     const requiredFields = ['rid', 'dateNeeded', 'name', 'department', 'endUser', 'problem', 'materialsNeeded'];
-    for (let field of requiredFields) {
+    for (const field of requiredFields) {
       if (!form[field]) {
         showNotification('All fields are required');
         return false;

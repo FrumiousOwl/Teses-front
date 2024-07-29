@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Text, Tooltip } from '@mantine/core';
 import { IconLogout } from '@tabler/icons-react';
-import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle } from 'react-icons/ai';
+import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle, AiFillFile } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import classes from './NavbarSegmented.module.css';
@@ -13,6 +13,7 @@ const tabs = {
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+    { link: '/dashboard/invoice-report', label: 'Invoice Report', icon: AiFillFile }, // Added Invoice Report
   ],
   general: [],
 };

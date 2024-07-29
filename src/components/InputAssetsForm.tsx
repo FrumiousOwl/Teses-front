@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Table, Modal, Pagination } from '@mantine/core';
+import axios from 'axios';
 import { useApi } from '../service/apiService';
 import styles from './InputAssetsForm.module.css';
 
@@ -13,11 +16,17 @@ type Asset = {
   quantity: number;
 };
 
+type Category = {
+  id: number;
+  name: string;
+};
+
 const ITEMS_PER_PAGE = 5;
 
 const InputAssetsForm: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditIndex, setCurrentEditIndex] = useState<number | null>(null);
@@ -33,6 +42,24 @@ const InputAssetsForm: React.FC = () => {
   const [activePage, setActivePage] = useState(1);
   const customAxios = useApi();
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('https://localhost:7234/api/Category');
+        setCategories(response.data);
+        console.log(response.data);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error('Error fetching categories:', error.response?.data || error.message);
+        } else {
+          console.error('Unexpected error:', (error as Error).message);
+        }
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleSearch = (query: string) => {
     const filtered = assets.filter(asset =>
       asset.iid.toString().includes(query) ||
@@ -42,20 +69,6 @@ const InputAssetsForm: React.FC = () => {
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
   };
-
-  useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const data = await customAxios.get<Asset[]>('/assets'); // Adjust the URL as needed
-        setAssets(data);
-        setFilteredAssets(data);
-      } catch (error) {
-        console.error('Error fetching assets:', error);
-      }
-    };
-
-    fetchAssets();
-  }, [customAxios]);
 
   const handleAddAsset = async () => {
     try {
@@ -67,14 +80,20 @@ const InputAssetsForm: React.FC = () => {
         iid: assets.length + 1,
       };
 
+      console.log('Attempting to add asset:', newAsset); // Debug log
+
       const data = await customAxios.post<Asset, Asset>('/assets', newAsset);
       setAssets(prevAssets => [...prevAssets, data]);
       setFilteredAssets(prevAssets => [...prevAssets, data]);
       setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
       setAddModalOpen(false);
       setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
-    } catch (error) {
-      console.error('Error adding asset:', error);
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error adding asset:', error.response?.data || error.message);
+      } else {
+        console.error('Unexpected error:', (error as Error).message);
+      }
     }
   };
 
@@ -93,7 +112,11 @@ const InputAssetsForm: React.FC = () => {
         setActivePage(Math.max(1, activePage - 1)); // Go to the previous page if the current page is empty
       }
     } catch (error) {
-      console.error('Error deleting asset:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Error deleting asset:', error.response?.data || error.message);
+      } else {
+        console.error('Unexpected error:', (error as Error).message);
+      }
     }
   };
 
@@ -116,7 +139,11 @@ const InputAssetsForm: React.FC = () => {
         setEditModalOpen(false);
         setCurrentEditIndex(null);
       } catch (error) {
-        console.error('Error editing asset:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Error editing asset:', error.response?.data || error.message);
+        } else {
+          console.error('Unexpected error:', (error as Error).message);
+        }
       }
     }
   };
@@ -221,7 +248,7 @@ const InputAssetsForm: React.FC = () => {
           required
         />
         <TextInput
-          label="Available"
+          label="Available"         
           placeholder="Enter available quantity"
           value={newForm.available.toString()}
           onChange={(e) => handleAvailableChange(e.currentTarget.value)}
@@ -292,6 +319,7 @@ const InputAssetsForm: React.FC = () => {
       </Modal>
     </div>
   );
+  
 };
 
 export default InputAssetsForm;
