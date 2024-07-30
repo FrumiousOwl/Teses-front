@@ -6,34 +6,30 @@ import axios from 'axios';
 import { useApi } from '../service/apiService';
 import styles from './InputAssetsForm.module.css';
 
-type Asset = {
-  iid: number;
+type Category = {
+  categoryId: number;
   name: string;
-  dateOfPurchase: string;
+  dateOfPurchase: Date; // Updated to Date type
   deployed: number;
   available: number;
   defective: number;
   quantity: number;
 };
 
-type Category = {
-  id: number;
-  name: string;
-};
 
 const ITEMS_PER_PAGE = 5;
 
 const InputAssetsForm: React.FC = () => {
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [assets, setAssets] = useState<Category[]>([]);
+  const [filteredAssets, setFilteredAssets] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditIndex, setCurrentEditIndex] = useState<number | null>(null);
-  const [newForm, setNewForm] = useState<Asset>({
-    iid: 0,
+  const [formData, setFormData] = useState<Category>({
+    categoryId: 0,
     name: '',
-    dateOfPurchase: '',
+    dateOfPurchase: new Date(),
     deployed: 0,
     available: 0,
     defective: 0,
@@ -62,9 +58,9 @@ const InputAssetsForm: React.FC = () => {
 
   const handleSearch = (query: string) => {
     const filtered = assets.filter(asset =>
-      asset.iid.toString().includes(query) ||
+      asset.categoryId.toString().includes(query) ||
       asset.name.toLowerCase().includes(query.toLowerCase()) ||
-      asset.dateOfPurchase.toLowerCase().includes(query.toLowerCase())
+      asset.dateOfPurchase.toISOString().split('T')[0].includes(query)
     );
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
@@ -72,20 +68,20 @@ const InputAssetsForm: React.FC = () => {
 
   const handleAddAsset = async () => {
     try {
-      const calculatedQuantity = newForm.deployed + newForm.available + newForm.defective;
-
-      const newAsset: Asset = {
-        ...newForm,
+      const calculatedQuantity = formData.deployed + formData.available + formData.defective;
+      const newAsset: Category = {
+        ...formData,
         quantity: calculatedQuantity,
-        iid: assets.length + 1,
+        categoryId: assets.length + 1, // Ensure unique iid
       };
 
-      console.log('Attempting to add asset:', newAsset); // Debug log
+      // Attempt to POST to /assets
+      const data = await customAxios.post<Category, Category>('/Category', newAsset);
+      console.log('Asset added successfully:', data); // Debug log
 
-      const data = await customAxios.post<Asset, Asset>('/assets', newAsset);
       setAssets(prevAssets => [...prevAssets, data]);
       setFilteredAssets(prevAssets => [...prevAssets, data]);
-      setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
+      setFormData({ categoryId: 0, name: '', dateOfPurchase: new Date(), deployed: 0, available: 0, defective: 0, quantity: 0 });
       setAddModalOpen(false);
       setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
     } catch (error: any) {
@@ -100,7 +96,7 @@ const InputAssetsForm: React.FC = () => {
   const handleDeleteAsset = async (index: number) => {
     try {
       const assetToDelete = assets[index];
-      await customAxios.delete(`/assets/${assetToDelete.iid}`);
+      await customAxios.delete(`/assets/${assetToDelete.categoryId}`);
 
       const newAssets = [...assets];
       newAssets.splice(index, 1);
@@ -124,18 +120,18 @@ const InputAssetsForm: React.FC = () => {
     if (currentEditIndex !== null) {
       try {
         const editedAsset = {
-          ...newForm,
-          quantity: newForm.deployed + newForm.available + newForm.defective,
+          ...formData,
+          quantity: formData.deployed + formData.available + formData.defective,
         };
 
-        const data = await customAxios.put<Asset, Asset>(`/assets/${editedAsset.iid}`, editedAsset);
+        const data = await customAxios.put<Category, Category>(`/assets/${editedAsset.categoryId}`, editedAsset);
 
         const newAssets = [...assets];
         newAssets[currentEditIndex] = data;
 
         setAssets(newAssets);
         setFilteredAssets(newAssets);
-        setNewForm({ iid: 0, name: '', dateOfPurchase: '', deployed: 0, available: 0, defective: 0, quantity: 0 });
+        setFormData({ categoryId: 0, name: '', dateOfPurchase: new Date(), deployed: 0, available: 0, defective: 0, quantity: 0 });
         setEditModalOpen(false);
         setCurrentEditIndex(null);
       } catch (error) {
@@ -151,34 +147,29 @@ const InputAssetsForm: React.FC = () => {
   const openEditModal = (index: number) => {
     setCurrentEditIndex(index);
     const assetToEdit = assets[index];
-    setNewForm({
+    setFormData({
       ...assetToEdit,
+      dateOfPurchase: new Date(assetToEdit.dateOfPurchase), // Ensure date is a Date object
     });
     setEditModalOpen(true);
   };
 
-  const handleDeployedChange = (value: string) => {
-    const deployed = parseInt(value) || 0;
-    setNewForm({ ...newForm, deployed });
+  const handleInputChange = (field: keyof Category, value: string) => {
+    const parsedValue = ['deployed', 'available', 'defective'].includes(field) ? parseInt(value) || 0 : value;
+    setFormData({ ...formData, [field]: parsedValue });
   };
 
-  const handleAvailableChange = (value: string) => {
-    const available = parseInt(value) || 0;
-    setNewForm({ ...newForm, available });
-  };
-
-  const handleDefectiveChange = (value: string) => {
-    const defective = parseInt(value) || 0;
-    setNewForm({ ...newForm, defective });
+  const handleDateChange = (value: string) => {
+    setFormData({ ...formData, dateOfPurchase: new Date(value) });
   };
 
   const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
 
   const rows = paginatedAssets.map((asset, index) => (
     <tr key={index}>
-      <td>{asset.iid}</td>
+      <td>{asset.categoryId}</td>
       <td>{asset.name}</td>
-      <td>{asset.dateOfPurchase}</td>
+      <td>{asset.dateOfPurchase.toISOString().split('T')[0]}</td>
       <td>{asset.deployed}</td>
       <td>{asset.available}</td>
       <td>{asset.defective}</td>
@@ -201,7 +192,7 @@ const InputAssetsForm: React.FC = () => {
         <div className={styles.search}>
           <TextInput
             className={styles.searchInput}
-            placeholder="Search by IID, Name or Date of Purchase"
+            placeholder="Search by categoryId, Name or Date of Purchase"
             onChange={(e) => handleSearch(e.currentTarget.value)}
           />
         </div>
@@ -236,37 +227,37 @@ const InputAssetsForm: React.FC = () => {
         <TextInput
           label="Asset Name"
           placeholder="Enter asset name"
-          value={newForm.name}
-          onChange={(e) => setNewForm({ ...newForm, name: e.currentTarget.value })}
+          value={formData.name}
+          onChange={(e) => handleInputChange('name', e.currentTarget.value)}
           required
         />
-        <TextInput
+               <TextInput
           label="Deployed"
           placeholder="Enter deployed quantity"
-          value={newForm.deployed.toString()}
-          onChange={(e) => handleDeployedChange(e.currentTarget.value)}
+          value={formData.deployed.toString()}
+          onChange={(e) => handleInputChange('deployed', e.currentTarget.value)}
           required
         />
         <TextInput
           label="Available"         
           placeholder="Enter available quantity"
-          value={newForm.available.toString()}
-          onChange={(e) => handleAvailableChange(e.currentTarget.value)}
+          value={formData.available.toString()}
+          onChange={(e) => handleInputChange('available', e.currentTarget.value)}
           required
         />
         <TextInput
           label="Defective"
           placeholder="Enter defective quantity"
-          value={newForm.defective.toString()}
-          onChange={(e) => handleDefectiveChange(e.currentTarget.value)}
+          value={formData.defective.toString()}
+          onChange={(e) => handleInputChange('defective', e.currentTarget.value)}
           required
         />
         <div className={styles.datePickerWrapper}>
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={newForm.dateOfPurchase}
-            onChange={(e) => setNewForm({ ...newForm, dateOfPurchase: e.currentTarget.value })}
+            value={formData.dateOfPurchase.toISOString().split('T')[0]}
+            onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
         </div>
@@ -279,37 +270,37 @@ const InputAssetsForm: React.FC = () => {
         <TextInput
           label="Asset Name"
           placeholder="Enter asset name"
-          value={newForm.name}
-          onChange={(e) => setNewForm({ ...newForm, name: e.currentTarget.value })}
+          value={formData.name}
+          onChange={(e) => handleInputChange('name', e.currentTarget.value)}
           required
         />
         <TextInput
           label="Deployed"
           placeholder="Enter deployed quantity"
-          value={newForm.deployed.toString()}
-          onChange={(e) => handleDeployedChange(e.currentTarget.value)}
+          value={formData.deployed.toString()}
+          onChange={(e) => handleInputChange('deployed', e.currentTarget.value)}
           required
         />
         <TextInput
           label="Available"
           placeholder="Enter available quantity"
-          value={newForm.available.toString()}
-          onChange={(e) => handleAvailableChange(e.currentTarget.value)}
+          value={formData.available.toString()}
+          onChange={(e) => handleInputChange('available', e.currentTarget.value)}
           required
         />
         <TextInput
           label="Defective"
           placeholder="Enter defective quantity"
-          value={newForm.defective.toString()}
-          onChange={(e) => handleDefectiveChange(e.currentTarget.value)}
+          value={formData.defective.toString()}
+          onChange={(e) => handleInputChange('defective', e.currentTarget.value)}
           required
         />
         <div className={styles.datePickerWrapper}>
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={newForm.dateOfPurchase}
-            onChange={(e) => setNewForm({ ...newForm, dateOfPurchase: e.currentTarget.value })}
+            value={formData.dateOfPurchase.toISOString().split('T')[0]}
+            onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
         </div>
@@ -319,7 +310,7 @@ const InputAssetsForm: React.FC = () => {
       </Modal>
     </div>
   );
-  
 };
 
 export default InputAssetsForm;
+

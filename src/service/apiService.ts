@@ -75,8 +75,7 @@ class CustomAxiosWrapper {
 export const useApi = () => {
   const customAxios = new CustomAxiosWrapper(
     axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL, // Use the environment variable for the base URL
-      // headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      baseURL: 'https://localhost:7234/api/Category', // General base URL for API
     })
   );
 
