@@ -75,7 +75,7 @@ class CustomAxiosWrapper {
 export const useApi = () => {
   const customAxios = new CustomAxiosWrapper(
     axios.create({
-      baseURL: 'https://localhost:7234/api/Category', // General base URL for API
+      baseURL: 'https://localhost:7234/api', // General base URL for API
     })
   );
 

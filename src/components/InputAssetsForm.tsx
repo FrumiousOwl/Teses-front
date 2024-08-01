@@ -9,7 +9,8 @@ import styles from './InputAssetsForm.module.css';
 type Category = {
   categoryId: number;
   name: string;
-  dateOfPurchase: Date; // Updated to Date type
+  description: string;
+  dateOfPurchase: string;
   deployed: number;
   available: number;
   defective: number;
@@ -17,7 +18,7 @@ type Category = {
 };
 
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 const InputAssetsForm: React.FC = () => {
   const [assets, setAssets] = useState<Category[]>([]);
@@ -29,7 +30,8 @@ const InputAssetsForm: React.FC = () => {
   const [formData, setFormData] = useState<Category>({
     categoryId: 0,
     name: '',
-    dateOfPurchase: new Date(),
+    description: '',
+    dateOfPurchase: '',
     deployed: 0,
     available: 0,
     defective: 0,
@@ -41,8 +43,9 @@ const InputAssetsForm: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://localhost:7234/api/Category');
+        const response = await axios.get<Category[]>('https://localhost:7234/api/Category');
         setCategories(response.data);
+        setFilteredAssets(response.data);
         console.log(response.data);
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -60,7 +63,7 @@ const InputAssetsForm: React.FC = () => {
     const filtered = assets.filter(asset =>
       asset.categoryId.toString().includes(query) ||
       asset.name.toLowerCase().includes(query.toLowerCase()) ||
-      asset.dateOfPurchase.toISOString().split('T')[0].includes(query)
+      asset.dateOfPurchase?.split('T')[0].includes(query)
     );
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
@@ -73,6 +76,7 @@ const InputAssetsForm: React.FC = () => {
         ...formData,
         quantity: calculatedQuantity,
         categoryId: assets.length + 1, // Ensure unique iid
+        dateOfPurchase: new Date().toISOString(),
       };
 
       // Attempt to POST to /assets
@@ -81,7 +85,7 @@ const InputAssetsForm: React.FC = () => {
 
       setAssets(prevAssets => [...prevAssets, data]);
       setFilteredAssets(prevAssets => [...prevAssets, data]);
-      setFormData({ categoryId: 0, name: '', dateOfPurchase: new Date(), deployed: 0, available: 0, defective: 0, quantity: 0 });
+      setFormData({ categoryId: 0, name: '', description: '', dateOfPurchase: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
       setAddModalOpen(false);
       setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
     } catch (error: any) {
@@ -96,7 +100,7 @@ const InputAssetsForm: React.FC = () => {
   const handleDeleteAsset = async (index: number) => {
     try {
       const assetToDelete = assets[index];
-      await customAxios.delete(`/assets/${assetToDelete.categoryId}`);
+      await customAxios.delete(`/category/${assetToDelete.categoryId}`);
 
       const newAssets = [...assets];
       newAssets.splice(index, 1);
@@ -131,7 +135,7 @@ const InputAssetsForm: React.FC = () => {
 
         setAssets(newAssets);
         setFilteredAssets(newAssets);
-        setFormData({ categoryId: 0, name: '', dateOfPurchase: new Date(), deployed: 0, available: 0, defective: 0, quantity: 0 });
+        setFormData({ categoryId: 0, name: '', description: '', dateOfPurchase: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
         setEditModalOpen(false);
         setCurrentEditIndex(null);
       } catch (error) {
@@ -149,7 +153,7 @@ const InputAssetsForm: React.FC = () => {
     const assetToEdit = assets[index];
     setFormData({
       ...assetToEdit,
-      dateOfPurchase: new Date(assetToEdit.dateOfPurchase), // Ensure date is a Date object
+      dateOfPurchase: new Date(assetToEdit.dateOfPurchase).toISOString(), // Ensure date is a Date object
     });
     setEditModalOpen(true);
   };
@@ -160,20 +164,21 @@ const InputAssetsForm: React.FC = () => {
   };
 
   const handleDateChange = (value: string) => {
-    setFormData({ ...formData, dateOfPurchase: new Date(value) });
+    setFormData({ ...formData, dateOfPurchase: new Date(value).toISOString() });
   };
 
   const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
 
-  const rows = paginatedAssets.map((asset, index) => (
+  const rows = paginatedAssets.map((category, index) => (
     <tr key={index}>
-      <td>{asset.categoryId}</td>
-      <td>{asset.name}</td>
-      <td>{asset.dateOfPurchase.toISOString().split('T')[0]}</td>
-      <td>{asset.deployed}</td>
-      <td>{asset.available}</td>
-      <td>{asset.defective}</td>
-      <td>{asset.quantity}</td>
+      <td>{category.categoryId}</td>
+      <td>{category.name}</td>
+      <td>{category.description}</td>
+      <td>{category.dateOfPurchase?.split('T')[0]}</td>
+      <td>{category.deployed}</td>
+      <td>{category.available}</td>
+      <td>{category.defective}</td>
+      <td>{category.quantity}</td>
       <td>
         <Button onClick={() => openEditModal(index + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" mr="xs">
           Edit
@@ -201,6 +206,7 @@ const InputAssetsForm: React.FC = () => {
             <tr>
               <th>IID</th>
               <th>Name</th>
+              <th>Description</th>
               <th>Date of Purchase</th>
               <th>Deployed</th>
               <th>Available</th>
@@ -231,7 +237,7 @@ const InputAssetsForm: React.FC = () => {
           onChange={(e) => handleInputChange('name', e.currentTarget.value)}
           required
         />
-               <TextInput
+        <TextInput
           label="Deployed"
           placeholder="Enter deployed quantity"
           value={formData.deployed.toString()}
@@ -256,7 +262,7 @@ const InputAssetsForm: React.FC = () => {
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={formData.dateOfPurchase.toISOString().split('T')[0]}
+            value={formData.dateOfPurchase?.split('T')[0]}
             onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
@@ -299,7 +305,7 @@ const InputAssetsForm: React.FC = () => {
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={formData.dateOfPurchase.toISOString().split('T')[0]}
+            value={formData.dateOfPurchase?.split('T')[0]}
             onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
