@@ -10,7 +10,7 @@ type Category = {
   categoryId: number;
   name: string;
   description: string;
-  dateOfPurchase: string;
+  datePurchased: string;
   deployed: number;
   available: number;
   defective: number;
@@ -31,7 +31,7 @@ const InputAssetsForm: React.FC = () => {
     categoryId: 0,
     name: '',
     description: '',
-    dateOfPurchase: '',
+    datePurchased: new Date().toISOString(),
     deployed: 0,
     available: 0,
     defective: 0,
@@ -43,10 +43,13 @@ const InputAssetsForm: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get<Category[]>('https://localhost:7234/api/Category');
-        setCategories(response.data);
-        setFilteredAssets(response.data);
-        console.log(response.data);
+        const response = await axios.get('https://localhost:7234/api/Category');
+        const categoriesWithParsedDates = response.data.map((category: Category) => ({
+          ...category,
+          datePurchased: new Date(category.datePurchased).toLocaleDateString(),
+        }));
+        setCategories(categoriesWithParsedDates);
+        setFilteredAssets(categoriesWithParsedDates);
       } catch (error) {
         if (axios.isAxiosError(error)) {
           console.error('Error fetching categories:', error.response?.data || error.message);
@@ -63,7 +66,7 @@ const InputAssetsForm: React.FC = () => {
     const filtered = assets.filter(asset =>
       asset.categoryId.toString().includes(query) ||
       asset.name.toLowerCase().includes(query.toLowerCase()) ||
-      asset.dateOfPurchase?.split('T')[0].includes(query)
+      asset.datePurchased?.split('T')[0].includes(query)
     );
     setFilteredAssets(filtered);
     setActivePage(1); // Reset to first page on search change
@@ -74,25 +77,25 @@ const InputAssetsForm: React.FC = () => {
       const calculatedQuantity = formData.deployed + formData.available + formData.defective;
       const newAsset: Category = {
         ...formData,
-        quantity: calculatedQuantity,
-        categoryId: assets.length + 1, // Ensure unique iid
-        dateOfPurchase: new Date().toISOString(),
+        datePurchased: new Date(formData.datePurchased).toISOString(),
       };
-
-      // Attempt to POST to /assets
+  
+      // Attempt to POST to /Category
       const data = await customAxios.post<Category, Category>('/Category', newAsset);
       console.log('Asset added successfully:', data); // Debug log
-
+  
       setAssets(prevAssets => [...prevAssets, data]);
       setFilteredAssets(prevAssets => [...prevAssets, data]);
-      setFormData({ categoryId: 0, name: '', description: '', dateOfPurchase: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
+      setFormData({ categoryId: 0, name: '', description: '', datePurchased: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
       setAddModalOpen(false);
       setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         console.error('Error adding asset:', error.response?.data || error.message);
+        alert(`Error adding asset: ${error.response?.data || error.message}`); // Display the error to the user
       } else {
         console.error('Unexpected error:', (error as Error).message);
+        alert(`Unexpected error: ${(error as Error).message}`); // Display the error to the user
       }
     }
   };
@@ -135,7 +138,7 @@ const InputAssetsForm: React.FC = () => {
 
         setAssets(newAssets);
         setFilteredAssets(newAssets);
-        setFormData({ categoryId: 0, name: '', description: '', dateOfPurchase: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
+        setFormData({ categoryId: 0, name: '', description: '', datePurchased: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
         setEditModalOpen(false);
         setCurrentEditIndex(null);
       } catch (error) {
@@ -153,7 +156,7 @@ const InputAssetsForm: React.FC = () => {
     const assetToEdit = assets[index];
     setFormData({
       ...assetToEdit,
-      dateOfPurchase: new Date(assetToEdit.dateOfPurchase).toISOString(), // Ensure date is a Date object
+      datePurchased: new Date(assetToEdit.datePurchased).toISOString(), // Ensure date is a Date object
     });
     setEditModalOpen(true);
   };
@@ -164,7 +167,7 @@ const InputAssetsForm: React.FC = () => {
   };
 
   const handleDateChange = (value: string) => {
-    setFormData({ ...formData, dateOfPurchase: new Date(value).toISOString() });
+    setFormData({ ...formData, datePurchased: new Date(value).toISOString() });
   };
 
   const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
@@ -174,7 +177,7 @@ const InputAssetsForm: React.FC = () => {
       <td>{category.categoryId}</td>
       <td>{category.name}</td>
       <td>{category.description}</td>
-      <td>{category.dateOfPurchase?.split('T')[0]}</td>
+      <td>{category.datePurchased?.split('T')[0]}</td>
       <td>{category.deployed}</td>
       <td>{category.available}</td>
       <td>{category.defective}</td>
@@ -238,6 +241,13 @@ const InputAssetsForm: React.FC = () => {
           required
         />
         <TextInput
+          label="Description"
+          placeholder="Enter asset description"
+          value={formData.description}
+          onChange={(e) => handleInputChange('description', e.currentTarget.value)}
+          required
+        />
+        <TextInput
           label="Deployed"
           placeholder="Enter deployed quantity"
           value={formData.deployed.toString()}
@@ -262,7 +272,7 @@ const InputAssetsForm: React.FC = () => {
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={formData.dateOfPurchase?.split('T')[0]}
+            value={formData.datePurchased?.split('T')[0]}
             onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
@@ -278,6 +288,13 @@ const InputAssetsForm: React.FC = () => {
           placeholder="Enter asset name"
           value={formData.name}
           onChange={(e) => handleInputChange('name', e.currentTarget.value)}
+          required
+        />
+        <TextInput
+          label="Description"
+          placeholder="Enter asset description"
+          value={formData.description}
+          onChange={(e) => handleInputChange('description', e.currentTarget.value)}
           required
         />
         <TextInput
@@ -305,7 +322,7 @@ const InputAssetsForm: React.FC = () => {
           <label className={styles.datePickerLabel}>Date of Purchase</label>
           <TextInput
             type="date"
-            value={formData.dateOfPurchase?.split('T')[0]}
+            value={formData.datePurchased?.split('T')[0]}
             onChange={(e) => handleDateChange(e.currentTarget.value)}
             required
           />
