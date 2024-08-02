@@ -27,6 +27,8 @@ const InputAssetsForm: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditIndex, setCurrentEditIndex] = useState<number | null>(null);
+  const [requests, setRequests] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<Category>({
     categoryId: 0,
     name: '',
@@ -37,9 +39,12 @@ const InputAssetsForm: React.FC = () => {
     defective: 0,
     quantity: 0,
   });
+
+  //states
   const [activePage, setActivePage] = useState(1);
   const customAxios = useApi();
-
+  
+  //get
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -62,16 +67,28 @@ const InputAssetsForm: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const handleSearch = (query: string) => {
-    const filtered = assets.filter(asset =>
-      asset.categoryId.toString().includes(query) ||
-      asset.name.toLowerCase().includes(query.toLowerCase()) ||
-      asset.datePurchased?.split('T')[0].includes(query)
-    );
-    setFilteredAssets(filtered);
-    setActivePage(1); // Reset to first page on search change
+  //search
+  const handleSearch = async () => {
+    try {
+      if (!searchTerm) {
+        setFilteredAssets(categories);
+        return;
+      }
+      const response = await axios.get(`https://localhost:7234/api/Category/searchCategory/categoryName?name=${searchTerm}`);
+      setFilteredAssets(response.data);
+    } catch (error) {
+      console.error(error); 
+    }
   };
 
+  //when enter key is pressed when on serach bar do this.
+  const handleKeyDown = (event: { key: string; }) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  //post
   const handleAddAsset = async () => {
     try {
       const calculatedQuantity = formData.deployed + formData.available + formData.defective;
@@ -80,9 +97,9 @@ const InputAssetsForm: React.FC = () => {
         datePurchased: new Date(formData.datePurchased).toISOString(),
       };
   
-      // Attempt to POST to /Category
+      
       const data = await customAxios.post<Category, Category>('/Category', newAsset);
-      console.log('Asset added successfully:', data); // Debug log
+      console.log('Asset added successfully:', data); 
   
       setAssets(prevAssets => [...prevAssets, data]);
       setFilteredAssets(prevAssets => [...prevAssets, data]);
@@ -129,9 +146,10 @@ const InputAssetsForm: React.FC = () => {
         const editedAsset = {
           ...formData,
           quantity: formData.deployed + formData.available + formData.defective,
+          datePurchased: new Date(formData.datePurchased).toISOString(),
         };
 
-        const data = await customAxios.put<Category, Category>(`/assets/${editedAsset.categoryId}`, editedAsset);
+        const data = await customAxios.put<Category, Category>(`/Category/${editedAsset.categoryId}`, editedAsset);
 
         const newAssets = [...assets];
         newAssets[currentEditIndex] = data;
@@ -152,15 +170,30 @@ const InputAssetsForm: React.FC = () => {
   };
 
   const openEditModal = (index: number) => {
+    if (index < 0 || index >= assets.length) {
+      console.error('Index out of bounds:', index);
+      return;
+    }
+  
+    const categoryToEdit = assets[index];
+    if (!categoryToEdit) {
+      console.error('Asset is undefined at index:', index);
+      return;
+    }
+  
+    if (!categoryToEdit.datePurchased) {
+      console.error('datePurchased is undefined:', categoryToEdit);
+      return;
+    }
+  
     setCurrentEditIndex(index);
-    const assetToEdit = assets[index];
     setFormData({
-      ...assetToEdit,
-      datePurchased: new Date(assetToEdit.datePurchased).toISOString(), // Ensure date is a Date object
+      ...categoryToEdit,
+      datePurchased: new Date(categoryToEdit.datePurchased).toISOString(),
     });
     setEditModalOpen(true);
   };
-
+  
   const handleInputChange = (field: keyof Category, value: string) => {
     const parsedValue = ['deployed', 'available', 'defective'].includes(field) ? parseInt(value) || 0 : value;
     setFormData({ ...formData, [field]: parsedValue });
@@ -173,7 +206,7 @@ const InputAssetsForm: React.FC = () => {
   const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
 
   const rows = paginatedAssets.map((category, index) => (
-    <tr key={index}>
+    <tr key={category.categoryId}>
       <td>{category.categoryId}</td>
       <td>{category.name}</td>
       <td>{category.description}</td>
@@ -183,10 +216,10 @@ const InputAssetsForm: React.FC = () => {
       <td>{category.defective}</td>
       <td>{category.quantity}</td>
       <td>
-        <Button onClick={() => openEditModal(index + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" mr="xs">
+        <Button onClick={() => openEditModal(category.categoryId + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" mr="xs">
           Edit
         </Button>
-        <Button onClick={() => handleDeleteAsset(index + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" color="red">
+        <Button onClick={() => handleDeleteAsset(category.categoryId + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" color="red">
           Delete
         </Button>
       </td>
@@ -199,10 +232,13 @@ const InputAssetsForm: React.FC = () => {
         <h2 className={styles.title}>Input Assets</h2>
         <div className={styles.search}>
           <TextInput
+            type="text"
             className={styles.searchInput}
-            placeholder="Search by categoryId, Name or Date of Purchase"
-            onChange={(e) => handleSearch(e.currentTarget.value)}
+            placeholder="Search by Name"
+            value = {searchTerm}
+            onChange={(e) => setSearchTerm(e.currentTarget.value)} onKeyDown={handleKeyDown}
           />
+          <button  className={styles.searchButton} onClick={handleSearch}>Search</button>
         </div>
         <Table className={styles.table} striped highlightOnHover>
           <thead>

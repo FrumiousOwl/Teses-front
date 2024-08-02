@@ -59,7 +59,7 @@
 
 /* Button hover state */
 .button:hover {
-  background-color: #0056b3;
+  background-color: #1c4572;
   transform: scale(1.05);
 }
 
@@ -85,6 +85,27 @@
   outline: none;
 }
 
+/*Search Button*/
+.search {
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  flex-grow: 1; /* Makes the input take up available space */
+  margin-right: 8px; /* Adds some space between the input and the button */
+}
+
+.searchButton {
+  padding: 8px 16px;
+  background-color: #a9ecba;
+}
+
+.searchButton:hover{
+  background-color: #0aafa1;
+  transform: scale(1.02);
+  transition: background-color 0.3s ease;
+}
 /* Table styling */
 .table {
   width: 100%;
@@ -117,7 +138,7 @@
 
 /* Table row hover state */
 .table tr:hover {
-  background-color: #f1f1f1;
+  background-color: #dde7eb;
   transition: background-color 0.3s ease;
 }
 
