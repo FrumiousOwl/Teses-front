@@ -129,7 +129,7 @@ const Report: React.FC = () => {
   return (
     <Paper className={styles.wrapper}>
       <Title order={2} className={styles.title}>
-        Report
+        Service Requisition Report
       </Title>
 
       <div className={styles.dateInputs}>

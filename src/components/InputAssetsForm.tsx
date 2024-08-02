@@ -73,9 +73,21 @@ const InputAssetsForm: React.FC = () => {
       if (!searchTerm) {
         setFilteredAssets(categories);
         return;
+      } else {
+      // Check if the search term is numeric or not. If not, assume it's a category name. If it is, assume it's a category ID.
+      const isNumeric = /^\d+$/.test(searchTerm);
+
+      if (!isNumeric) {
+        const response = await axios.get(`https://localhost:7234/api/Category/searchCategory/categoryName?name=${searchTerm}`);
+        setFilteredAssets(response.data);
+      } else {
+        console.log('Search term is numeric:', searchTerm);
+        const searchId = parseInt(searchTerm);
+        const response = await axios.get(`https://localhost:7234/api/Category/searchCategoryId/categoryId?categoryId=${searchId}`);
+        setFilteredAssets(response.data);
       }
-      const response = await axios.get(`https://localhost:7234/api/Category/searchCategory/categoryName?name=${searchTerm}`);
-      setFilteredAssets(response.data);
+    }
+
     } catch (error) {
       console.error(error); 
     }
@@ -94,6 +106,7 @@ const InputAssetsForm: React.FC = () => {
       const calculatedQuantity = formData.deployed + formData.available + formData.defective;
       const newAsset: Category = {
         ...formData,
+        quantity: calculatedQuantity,
         datePurchased: new Date(formData.datePurchased).toISOString(),
       };
   
@@ -169,30 +182,23 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
-  const openEditModal = (index: number) => {
-    if (index < 0 || index >= assets.length) {
-      console.error('Index out of bounds:', index);
-      return;
-    }
-  
-    const categoryToEdit = assets[index];
-    if (!categoryToEdit) {
-      console.error('Asset is undefined at index:', index);
-      return;
-    }
-  
-    if (!categoryToEdit.datePurchased) {
-      console.error('datePurchased is undefined:', categoryToEdit);
-      return;
-    }
-  
+  const openEditModal = (index: number) => 
+    {
     setCurrentEditIndex(index);
+    const assetToEdit = assets[index];
     setFormData({
-      ...categoryToEdit,
-      datePurchased: new Date(categoryToEdit.datePurchased).toISOString(),
+      ...assetToEdit,
+      datePurchased: new Date(assetToEdit.datePurchased).toISOString(),
     });
     setEditModalOpen(true);
   };
+  //   setCurrentEditIndex(index);
+  //   setFormData({
+  //     ...categoryToEdit,
+  //     datePurchased: new Date(categoryToEdit.datePurchased).toISOString(),
+  //   });
+  //   setEditModalOpen(true);
+  // };
   
   const handleInputChange = (field: keyof Category, value: string) => {
     const parsedValue = ['deployed', 'available', 'defective'].includes(field) ? parseInt(value) || 0 : value;
@@ -205,7 +211,7 @@ const InputAssetsForm: React.FC = () => {
 
   const paginatedAssets = Array.isArray(filteredAssets) ? filteredAssets.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE) : [];
 
-  const rows = paginatedAssets.map((category, index) => (
+  const rows = paginatedAssets.map((category) => (
     <tr key={category.categoryId}>
       <td>{category.categoryId}</td>
       <td>{category.name}</td>
@@ -214,12 +220,12 @@ const InputAssetsForm: React.FC = () => {
       <td>{category.deployed}</td>
       <td>{category.available}</td>
       <td>{category.defective}</td>
-      <td>{category.quantity}</td>
+      <td>{category.quantity = category.defective + category.available + category.deployed}</td>
       <td>
-        <Button onClick={() => openEditModal(category.categoryId + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" mr="xs">
+        <Button onClick={() => openEditModal(category.categoryId)} size="xs" mr="xs">
           Edit
         </Button>
-        <Button onClick={() => handleDeleteAsset(category.categoryId + (activePage - 1) * ITEMS_PER_PAGE)} size="xs" color="red">
+        <Button onClick={() => handleDeleteAsset(category.categoryId)} size="xs" color="red">
           Delete
         </Button>
       </td>
@@ -234,11 +240,11 @@ const InputAssetsForm: React.FC = () => {
           <TextInput
             type="text"
             className={styles.searchInput}
-            placeholder="Search by Name"
+            placeholder="Search by Name or Asset Id"
             value = {searchTerm}
             onChange={(e) => setSearchTerm(e.currentTarget.value)} onKeyDown={handleKeyDown}
           />
-          <button  className={styles.searchButton} onClick={handleSearch}>Search</button>
+          <Button  className={styles.searchButton} onClick={handleSearch}>Search</Button>
         </div>
         <Table className={styles.table} striped highlightOnHover>
           <thead>

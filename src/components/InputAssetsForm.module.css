@@ -97,8 +97,13 @@
 }
 
 .searchButton {
-  padding: 8px 16px;
-  background-color: #a9ecba;
+  padding: 10px 16px;
+  background-color: #99bae5;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .searchButton:hover{
