@@ -83,6 +83,33 @@
   outline: none;
 }
 
+/*Search Button*/
+.search {
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  flex-grow: 1; /* Makes the input take up available space */
+  margin-right: 8px; /* Adds some space between the input and the button */
+}
+
+.searchButton {
+  padding: 10px 16px;
+  background-color: #99bae5;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.searchButton:hover{
+  background-color: #0aafa1;
+  transform: scale(1.02);
+  transition: background-color 0.3s ease;
+}
+
 /* Table styling */
 .table {
   width: 100%;
