@@ -17,7 +17,6 @@ type Category = {
   quantity: number;
 };
 
-
 const ITEMS_PER_PAGE = 10;
 
 const InputAssetsForm: React.FC = () => {
@@ -53,7 +52,7 @@ const InputAssetsForm: React.FC = () => {
           ...category,
           datePurchased: new Date(category.datePurchased).toLocaleDateString(),
         }));
-        setCategories(categoriesWithParsedDates);
+        setAssets(categoriesWithParsedDates);
         setFilteredAssets(categoriesWithParsedDates);
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -63,10 +62,11 @@ const InputAssetsForm: React.FC = () => {
         }
       }
     };
-
+  
     fetchCategories();
   }, []);
-
+  
+  
   //search
   const handleSearch = async () => {
     try {
@@ -119,6 +119,7 @@ const InputAssetsForm: React.FC = () => {
       setFormData({ categoryId: 0, name: '', description: '', datePurchased: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
       setAddModalOpen(false);
       setActivePage(Math.ceil((filteredAssets.length + 1) / ITEMS_PER_PAGE)); // Update active page
+      window.location.reload();
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         console.error('Error adding asset:', error.response?.data || error.message);
@@ -130,76 +131,73 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
-  const handleDeleteAsset = async (index: number) => {
-    try {
-      const assetToDelete = assets[index];
-      await customAxios.delete(`/category/${assetToDelete.categoryId}`);
+ // Inside the handleDeleteAsset function
+ const handleDeleteAsset = async (categoryId: number) => {
+  try {
+    await customAxios.delete(`/category/${categoryId}`);
 
-      const newAssets = [...assets];
-      newAssets.splice(index, 1);
+    const newAssets = assets.filter(asset => asset.categoryId !== categoryId);
+    setAssets(newAssets);
+    setFilteredAssets(newAssets);
+
+    if (newAssets.length < (activePage - 1) * ITEMS_PER_PAGE) {
+      setActivePage(Math.max(1, activePage - 1));
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error deleting asset:', error.response?.data || error.message);
+    } else {
+      console.error('Unexpected error:', (error as Error).message);
+    }
+  }
+};
+  
+const handleEditAsset = async () => {
+  if (currentEditIndex !== null) {
+    try {
+      const editedAsset = {
+        ...formData,
+        datePurchased: new Date(formData.datePurchased).toISOString(),
+      };
+
+      const data = await customAxios.put<Category, Category>(`/Category/${editedAsset.categoryId}`, editedAsset);
+
+      const newAssets = assets.map(asset => 
+        asset.categoryId === editedAsset.categoryId ? data : asset
+      );
+
       setAssets(newAssets);
       setFilteredAssets(newAssets);
-
-      // Adjust the current page if necessary
-      if (newAssets.length < (activePage - 1) * ITEMS_PER_PAGE) {
-        setActivePage(Math.max(1, activePage - 1)); // Go to the previous page if the current page is empty
-      }
+      setFormData({ categoryId: 0, name: '', description: '', datePurchased: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
+      setEditModalOpen(false);
+      setCurrentEditIndex(null);
+      window.location.reload();
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Error deleting asset:', error.response?.data || error.message);
+        console.error('Error editing asset:', error.response?.data || error.message);
       } else {
         console.error('Unexpected error:', (error as Error).message);
       }
     }
-  };
+  }
+};
 
-  const handleEditAsset = async () => {
-    if (currentEditIndex !== null) {
-      try {
-        const editedAsset = {
-          ...formData,
-          quantity: formData.deployed + formData.available + formData.defective,
-          datePurchased: new Date(formData.datePurchased).toISOString(),
-        };
+// Inside the openEditModal function
+const openEditModal = (categoryId: number) => {
+  const assetToEdit = assets.find(asset => asset.categoryId === categoryId);
 
-        const data = await customAxios.put<Category, Category>(`/Category/${editedAsset.categoryId}`, editedAsset);
-
-        const newAssets = [...assets];
-        newAssets[currentEditIndex] = data;
-
-        setAssets(newAssets);
-        setFilteredAssets(newAssets);
-        setFormData({ categoryId: 0, name: '', description: '', datePurchased: new Date().toISOString(), deployed: 0, available: 0, defective: 0, quantity: 0 });
-        setEditModalOpen(false);
-        setCurrentEditIndex(null);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error('Error editing asset:', error.response?.data || error.message);
-        } else {
-          console.error('Unexpected error:', (error as Error).message);
-        }
-      }
-    }
-  };
-
-  const openEditModal = (index: number) => 
-    {
-    setCurrentEditIndex(index);
-    const assetToEdit = assets[index];
+  if (assetToEdit) {
     setFormData({
       ...assetToEdit,
       datePurchased: new Date(assetToEdit.datePurchased).toISOString(),
     });
+    setCurrentEditIndex(categoryId);
     setEditModalOpen(true);
-  };
-  //   setCurrentEditIndex(index);
-  //   setFormData({
-  //     ...categoryToEdit,
-  //     datePurchased: new Date(categoryToEdit.datePurchased).toISOString(),
-  //   });
-  //   setEditModalOpen(true);
-  // };
-  
+  } else {
+    console.error('Asset to edit not found');
+  }
+};
+ 
   const handleInputChange = (field: keyof Category, value: string) => {
     const parsedValue = ['deployed', 'available', 'defective'].includes(field) ? parseInt(value) || 0 : value;
     setFormData({ ...formData, [field]: parsedValue });
