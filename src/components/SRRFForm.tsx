@@ -7,12 +7,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import classes from './SRRFForm.module.css';
 
-export const initialData = [
-  { rid: 222463, dateNeeded: '06/05/2024', name: 'Jonahlyn Eleazar', department: 'UER', endUser: 'DES2296', problem: 'Installed 16gb memory', materialsNeeded: '1pc power cord', srrfNo: 6202406 },
-  { rid: 22583, dateNeeded: '09/06/2024', name: 'Haidee Virador', department: 'VAD', endUser: 'DES2349', problem: '1pc power cord', materialsNeeded: '1pc VGA to DP cable', srrfNo: 6202409 },
-  // Add more data as needed
-];
-
 const ITEMS_PER_PAGE = 10;
 
 const emptyForm = {
@@ -25,14 +19,8 @@ const emptyForm = {
   materialsNeeded: '',
 };
 
-const formatDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
-};
-
-
 export function SRRFForm() {
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -103,8 +91,8 @@ export function SRRFForm() {
 
   const handleSaveNewForm = () => {
     if (!validateForm(newForm)) return;
-    const newSrrfNo = Math.max(...data.map(d => d.srrfNo)) + 1;
-    const newData = { srrfNo: newSrrfNo, ...newForm, dateNeeded: formatDate(newForm.dateNeeded) };
+    const newSrrfNo = data.length > 0 ? Math.max(...data.map(d => d.srrfNo)) + 1 : 1;
+    const newData = { srrfNo: newSrrfNo, ...newForm, dateNeeded: new Date(newForm.dateNeeded).toLocaleDateString('en-GB') };
     setData([...data, newData]);
     setAddModalOpen(false);
     setNewForm(emptyForm);
@@ -127,12 +115,11 @@ export function SRRFForm() {
     setTimeout(() => setNotification({ message: '', show: false }), 3000);
   };
 
-  const filteredData = data.filter((item) =>
-    Object.values(item).some((val) =>
+  const filteredData: any[] = data.filter((item: any) =>
+    Object.values(item).some((val: any) =>
       val.toString().toLowerCase().includes(search.toLowerCase())
     )
   );
-
   const paginatedData = filteredData.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
 
   return (
@@ -261,13 +248,6 @@ const FormModal = ({ opened, onClose, form, setForm, onSave, title }: FormModalP
       mb="sm"
     />
     <TextInput
-      label="Date Needed"
-      value={form?.dateNeeded || ''}
-      onChange={(e) => setForm({ ...form, dateNeeded: e.currentTarget.value })}
-      mb="sm"
-      placeholder="DD/MM/YYYY"
-    />
-    <TextInput
       label="Name"
       value={form?.name || ''}
       onChange={(e) => setForm({ ...form, name: e.currentTarget.value })}
@@ -296,6 +276,13 @@ const FormModal = ({ opened, onClose, form, setForm, onSave, title }: FormModalP
       value={form?.materialsNeeded || ''}
       onChange={(e) => setForm({ ...form, materialsNeeded: e.currentTarget.value })}
       mb="md"
+    />
+    <TextInput
+      label="Date Needed"
+      type="date"
+      value={form?.dateNeeded || ''}
+      onChange={(e) => setForm({ ...form, dateNeeded: e.currentTarget.value })}
+      mb="sm"
     />
     <Button onClick={onSave}>Save</Button>
   </Modal>
