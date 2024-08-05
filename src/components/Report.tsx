@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Paper, Table, TextInput, Title, ScrollArea, Button } from '@mantine/core';
+import { initialData } from './SRRFForm';
 import { IconFileExport } from '@tabler/icons-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -16,11 +17,7 @@ interface ServiceRecord {
   srrfNo: number;
 }
 
-interface ReportProps {
-  data: ServiceRecord[];
-}
-
-const Report: React.FC<ReportProps> = ({ data }) => {
+const Report: React.FC = () => {
   const [monthlyStartDate, setMonthlyStartDate] = useState<string>('');
   const [monthlyEndDate, setMonthlyEndDate] = useState<string>('');
   const [yearlyStartDate, setYearlyStartDate] = useState<string>('');
@@ -28,7 +25,7 @@ const Report: React.FC<ReportProps> = ({ data }) => {
 
   const handleMonthlyReport = () => {
     if (!monthlyStartDate || !monthlyEndDate) return [];
-    const filteredData = data.filter(item => {
+    const filteredData = initialData.filter(item => {
       const itemDate = new Date(item.dateNeeded);
       const filterStartDate = new Date(monthlyStartDate);
       const filterEndDate = new Date(monthlyEndDate);
@@ -39,7 +36,7 @@ const Report: React.FC<ReportProps> = ({ data }) => {
 
   const handleYearlyReport = () => {
     if (!yearlyStartDate || !yearlyEndDate) return [];
-    const filteredData = data.filter(item => {
+    const filteredData = initialData.filter(item => {
       const itemDate = new Date(item.dateNeeded);
       const filterStartDate = new Date(yearlyStartDate);
       const filterEndDate = new Date(yearlyEndDate);
