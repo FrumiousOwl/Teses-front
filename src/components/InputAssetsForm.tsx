@@ -133,6 +133,7 @@ const InputAssetsForm: React.FC = () => {
       <Table>
         <thead>
           <tr>
+            <th>Index</th>
             <th>ID</th>
             <th>Name</th>
             <th>Description</th>
@@ -145,8 +146,9 @@ const InputAssetsForm: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredAssets.map((hardware) => (
+          {filteredAssets.map((hardware, index) => (
             <tr key={hardware.hardwareId}>
+              <td>{index + 1}</td> 
               <td>{hardware.hardwareId}</td>
               <td>{hardware.name}</td>
               <td>{hardware.description}</td>
