@@ -173,29 +173,109 @@ const InputAssetsForm: React.FC = () => {
       </Table>
 
       <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware">
-        <form onSubmit={handleAddHardware}>
-          <TextInput label="Name" onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Description" onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
-          <TextInput label="Date Purchased" type="date" onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
-          <TextInput label="Defective" type="number" onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })} required />
-          <TextInput label="Available" type="number" onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })} required />
-          <TextInput label="Deployed" type="number" onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })} required />
-          <TextInput label="Supplier" onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-          <Button type="submit">Submit</Button>
-        </form>
+      <form onSubmit={handleAddHardware}>
+  <TextInput
+    label="Name"
+    value={formData.name}
+    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Description"
+    value={formData.description}
+    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Date Purchased"
+    type="date"
+    value={formData.datePurchased}
+    onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Defective"
+    type="number"
+    value={formData.defective}
+    onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Available"
+    type="number"
+    value={formData.available}
+    onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Deployed"
+    type="number"
+    value={formData.deployed}
+    onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Supplier"
+    value={formData.supplier}
+    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+    required
+  />
+  <Button type="submit">Submit</Button>
+</form>
+
       </Modal>
 
       <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Hardware">
-        <form onSubmit={handleEditHardware}>
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
-          <TextInput label="Date Purchased" type="date" value={formData.datePurchased} onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
-          <TextInput label="Defective" type="number" value={formData.defective} onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })} required />
-          <TextInput label="Available" type="number" value={formData.available} onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })} required />
-          <TextInput label="Deployed" type="number" value={formData.deployed} onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })} required />
-          <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-          <Button type="submit">Save Changes</Button>
-        </form>
+        <form onSubmit={handleAddHardware}>
+  <TextInput
+    label="Name"
+    value={formData.name}
+    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Description"
+    value={formData.description}
+    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Date Purchased"
+    type="date"
+    value={formData.datePurchased}
+    onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })}
+    required
+  />
+  <TextInput
+    label="Defective"
+    type="number"
+    value={formData.defective}
+    onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Available"
+    type="number"
+    value={formData.available}
+    onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Deployed"
+    type="number"
+    value={formData.deployed}
+    onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })}
+    required
+  />
+  <TextInput
+    label="Supplier"
+    value={formData.supplier}
+    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+    required
+  />
+  <Button type="submit">Submit</Button>
+</form>
+
       </Modal>
     </div>
   );

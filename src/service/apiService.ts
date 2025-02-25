@@ -73,9 +73,21 @@ class CustomAxiosWrapper {
 
 // ✅ Export function to create API instance
 export const useApi = () => {
-  return new CustomAxiosWrapper(
-    axios.create({
-      baseURL: 'https://localhost:7234/api', // Keep base URL consistent
-    })
+  const customAxios = axios.create({
+    baseURL: 'https://localhost:7234/api',
+  });
+
+  // Add a request interceptor to include the token in the Authorization header
+  customAxios.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
   );
+
+  return new CustomAxiosWrapper(customAxios);
 };

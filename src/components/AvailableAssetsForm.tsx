@@ -1,50 +1,82 @@
-import React, { useState } from 'react';
-import { TextInput, Table, Pagination } from '@mantine/core';
-import styles from './AvailableAssetsForm.module.css';
+import React, { useState, useEffect } from "react";
+import { TextInput, Table, Pagination } from "@mantine/core";
+import { useApi } from "../service/apiService";
+import styles from "./AvailableAssetsForm.module.css";
 
 type Asset = {
-  aid: string;
+  hardwareId: number;
   name: string;
-  dateOfPurchase: string;
+  datePurchased: string;
   deployed: number;
   available: number;
+  supplier: string;
 };
 
-const initialAssets: Asset[] = [
-  { aid: 'AID-001', name: 'Asset 1', dateOfPurchase: '2022-01-01', deployed: 2, available: 7 },
-  { aid: 'AID-002', name: 'Asset 2', dateOfPurchase: '2022-02-15', deployed: 5, available: 9 },
-];
-
-const ITEMS_PER_PAGE = 3; // Set the number of items per page
+const ITEMS_PER_PAGE = 3;
 
 const AvailableAssetsForm: React.FC = () => {
+  const api = useApi();
   const [activePage, setActivePage] = useState<number>(1);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(initialAssets);
+  const [allAssets, setAllAssets] = useState<Asset[]>([]);
+  const [inputAssets, setInputAssets] = useState<string[]>([]); // Stores AIDs of input assets
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const handleSearch = (query: string) => {
-    const filtered = initialAssets.filter(asset =>
-      asset.aid.toLowerCase().includes(query.toLowerCase()) ||
-      asset.name.toLowerCase().includes(query.toLowerCase()) ||
-      asset.dateOfPurchase.includes(query)
-    );
-    setFilteredAssets(filtered);
-    setActivePage(1); // Reset to first page on search
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchAssets();
+    fetchInputAssets();
+  }, []);
+
+  // Fetch available assets
+  const fetchAssets = async () => {
+    try {
+      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
+      setAllAssets(data);
+    } catch (error) {
+      console.error("Error fetching available assets:", error);
+    }
   };
 
+  // Fetch input assets (AIDs only)
+  const fetchInputAssets = async () => {
+    try {
+      const data = await api.get<{ hardwareId: string }[]>("https://localhost:7234/api/Hardware");
+      console.log("Fetched Input Assets:", data); // Debugging
+      setInputAssets(data.map((asset) => asset.hardwareId));
+    } catch (error) {
+      console.error("Error fetching input assets:", error);
+    }
+  };
+  
+
+  // Filter available assets by excluding those in InputAssets
+  useEffect(() => {
+    const filtered = allAssets.filter((asset) => !inputAssets.includes(asset.hardwareId.toString()));
+
+    setFilteredAssets(filtered);
+  }, [allAssets, inputAssets]);
+
+  // Handle search filtering
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    const searched = allAssets.filter(
+      (asset) =>
+        !inputAssets.includes(asset.hardwareId.toString()) &&
+
+        (
+          asset.name.toLowerCase().includes(query.toLowerCase()) ||
+          asset.datePurchased.includes(query))
+    );
+    setFilteredAssets(searched);
+    setActivePage(1);
+  };
+
+  // Paginate assets
   const paginatedAssets = filteredAssets.slice(
     (activePage - 1) * ITEMS_PER_PAGE,
     activePage * ITEMS_PER_PAGE
   );
-
-  const rows = paginatedAssets.map((asset, index) => (
-    <tr key={index}>
-      <td>{asset.aid}</td>
-      <td>{asset.name}</td>
-      <td>{asset.dateOfPurchase}</td>
-      <td>{asset.available}</td>
-      <td>{asset.deployed}</td>
-    </tr>
-  ));
 
   return (
     <div className={styles.wrapper}>
@@ -52,21 +84,40 @@ const AvailableAssetsForm: React.FC = () => {
       <div className={styles.search}>
         <TextInput
           className={styles.searchInput}
-          placeholder="Search by AID, name or date of purchase"
+          placeholder="Search by name, or date of purchase"
+          value={searchQuery}
           onChange={(e) => handleSearch(e.currentTarget.value)}
         />
       </div>
       <Table className={styles.table} striped highlightOnHover>
         <thead>
           <tr>
-            <th>AID</th>
+            <th>Hardware Id</th>
             <th>Name</th>
-            <th>Date of Purchase</th>
+            <th>datePurchased</th>
             <th>Available</th>
             <th>Deployed</th>
+            <th>Supplier</th>
           </tr>
         </thead>
-        <tbody>{rows}</tbody>
+        <tbody>
+          {paginatedAssets.length > 0 ? (
+            paginatedAssets.map((asset) => (
+              <tr key={asset.hardwareId}>
+                <td>{asset.hardwareId}</td>
+                <td>{asset.name}</td>
+                <td>{asset.datePurchased}</td>
+                <td>{asset.available}</td>
+                <td>{asset.deployed}</td>
+                <td>{asset.supplier}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} style={{ textAlign: "center" }}>No available assets found.</td>
+            </tr>
+          )}
+        </tbody>
       </Table>
 
       <Pagination
@@ -81,3 +132,5 @@ const AvailableAssetsForm: React.FC = () => {
 };
 
 export default AvailableAssetsForm;
+
+

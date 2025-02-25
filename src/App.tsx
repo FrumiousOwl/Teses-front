@@ -7,7 +7,7 @@ import SRRFForm from './components/SRRFForm';
 import InputAssetsForm from './components/InputAssetsForm';
 import AvailableAssetsForm from './components/AvailableAssetsForm';
 import DefectiveAssetsForm from './components/DefectiveAssetsForm';
-import { InvoiceReportForm } from './components/InvoiceReportForm'; // Import the InvoiceReportForm component
+
 
 export default function App() {
   return (
@@ -19,9 +19,10 @@ export default function App() {
             <Route path="srrf" element={<SRRFForm />} />
             <Route path="input-assets" element={<InputAssetsForm />} />
             <Route path="available-assets" element={<AvailableAssetsForm />} />
-            <Route path="defective-assets" element={<DefectiveAssetsForm />} />
-          
-            <Route path="invoice-report" element={<InvoiceReportForm />} /> {/* Add the InvoiceReportForm route */}
+            <Route path="defective-assets" element={<DefectiveAssetsForm onSelectAsset={function (asset: { hardwareId: number; name: string; datePurchased: string; defective: number; supplier: string; }): void {
+              throw new Error('Function not implemented.');
+            } } />} />
+
           </Route>
         </Routes>
       </Router>
