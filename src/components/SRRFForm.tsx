@@ -1,108 +1,210 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { TextInput, Button, Table, Pagination } from '@mantine/core';
-import { useApi } from '../service/apiService';
-import styles from './SRRFForm.module.css';
+import React, { useState, useEffect } from "react";
+import { TextInput, Button, Table, Modal, Checkbox, Select } from "@mantine/core";
+import { useApi } from "../service/apiService";
+import styles from "./SRRFForm.module.css";
 
 type HardwareRequest = {
   requestId: number;
+  hardwareId: number | null; // Allow hardwareId to be optional
   dateNeeded: string;
   name: string;
   department: string;
   workstation: string;
   problem: string;
   isFulfilled: boolean;
-  hardwareId: number;
 };
-
-const ITEMS_PER_PAGE = 10;
 
 const SRRFForm: React.FC = () => {
   const [requests, setRequests] = useState<HardwareRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<HardwareRequest[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activePage, setActivePage] = useState(1);
-  
-  const navigate = useNavigate();
-  const customAxios = useApi();
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentEditId, setCurrentEditId] = useState<number | null>(null);
+  const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
+
+  const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
+    hardwareId: null, // Default to null instead of 0
+    dateNeeded: new Date().toISOString().split("T")[0],
+    name: "",
+    department: "",
+    workstation: "",
+    problem: "",
+    isFulfilled: false,
+  });
+
+  const api = useApi();
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      const token = localStorage.getItem('jwtToken');
-      if (!token) {
-        console.error('User is not authenticated');
-        navigate('/');
-        return;
-      }
-
-      try {
-        const response = await customAxios.get<HardwareRequest[]>('/api/HardwareRequest');
-        setRequests(response);
-        setFilteredRequests(response);
-        
-      } catch (error) {
-        console.error('Error fetching requests:', error);
-      }
-    };
-
     fetchRequests();
+    fetchHardwareOptions();
   }, []);
 
-  const handleSearch = () => {
-    if (!searchTerm) {
-      setFilteredRequests(requests);
-      return;
+  const fetchRequests = async () => {
+    try {
+      const data = await api.get<HardwareRequest[]>("/HardwareRequest");
+      setRequests(data);
+    } catch (error) {
+      console.error("Error fetching hardware requests:", error);
     }
-    setFilteredRequests(
-      requests.filter(request =>
-        request.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+  };
+
+  const fetchHardwareOptions = async () => {
+    try {
+      const data = await api.get<{ hardwareId: number; name: string }[]>("/Hardware");
+      setHardwareOptions(data.map((hw) => ({ value: hw.hardwareId.toString(), label: hw.name })));
+    } catch (error) {
+      console.error("Error fetching hardware options:", error);
+    }
+  };
+
+  const handleAddHardwareRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      // Convert hardwareId to null if not selected
+      const newRequest = {
+        ...formData,
+        hardwareId: formData.hardwareId ? formData.hardwareId : null,
+        dateNeeded: new Date(formData.dateNeeded).toISOString(),
+      };
+
+      const addedRequest = await api.post<typeof newRequest, HardwareRequest>(
+        "/HardwareRequest",
+        newRequest
+      );
+      setRequests((prev) => [...prev, addedRequest]);
+      setAddModalOpen(false);
+      resetFormData();
+    } catch (error) {
+      console.error("Error adding hardware request:", error);
+    }
+  };
+
+  const handleEditHardwareRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (currentEditId === null) return;
+
+    try {
+      const editedRequest = {
+        ...formData,
+        hardwareId: formData.hardwareId ? formData.hardwareId : null, // Allow null
+        dateNeeded: new Date(formData.dateNeeded).toISOString(),
+      };
+
+      const updatedRequest = await api.put<typeof editedRequest, HardwareRequest>(
+        `/HardwareRequest/${currentEditId}`,
+        editedRequest
+      );
+
+      setRequests((prev) =>
+        prev.map((request) =>
+          request.requestId === currentEditId ? updatedRequest : request
+        )
+      );
+
+      setEditModalOpen(false);
+      resetFormData();
+    } catch (error) {
+      console.error("Error editing hardware request:", error);
+    }
+  };
+
+  const handleDeleteHardwareRequest = async (requestId: number) => {
+    try {
+      await api.delete(`/HardwareRequest/${requestId}`);
+      setRequests((prev) => prev.filter((request) => request.requestId !== requestId));
+    } catch (error) {
+      console.error("Error deleting hardware request:", error);
+    }
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      hardwareId: null, // Reset to null
+      dateNeeded: new Date().toISOString().split("T")[0],
+      name: "",
+      department: "",
+      workstation: "",
+      problem: "",
+      isFulfilled: false,
+    });
   };
 
   return (
     <div className={styles.wrapper}>
-      <TextInput
-        placeholder="Search by name"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <Button onClick={handleSearch}>Search</Button>
+      <Button onClick={() => setAddModalOpen(true)}>Add Hardware Request</Button>
 
+      {/* Add Modal */}
+      <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware Request">
+        <form onSubmit={handleAddHardwareRequest}>
+          <Select
+            label="Select Hardware (Optional)"
+            data={hardwareOptions}
+            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
+            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
+          />
+          <TextInput
+            label="Date Needed"
+            type="date"
+            value={formData.dateNeeded}
+            onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })}
+            required
+          />
+          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
+          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
+          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
+          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
+          <Button type="submit">Submit</Button>
+        </form>
+      </Modal>
+
+      {/* Table */}
       <Table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Hardware</th>
+            <th>Date Needed</th>
             <th>Name</th>
             <th>Department</th>
             <th>Workstation</th>
             <th>Problem</th>
-            <th>Date Needed</th>
-            <th>Fulfilled</th>
+            <th>Is Fulfilled</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {filteredRequests.map(request => (
+          {requests.map((request) => (
             <tr key={request.requestId}>
-              <td>{request.requestId}</td>
+              <td>{request.hardwareId ? request.hardwareId : "N/A"}</td>
+              <td>{new Date(request.dateNeeded).toLocaleDateString()}</td>
               <td>{request.name}</td>
               <td>{request.department}</td>
               <td>{request.workstation}</td>
               <td>{request.problem}</td>
-              <td>{request.dateNeeded}</td>
-              <td>{request.isFulfilled ? 'Yes' : 'No'}</td>
+              <td>{request.isFulfilled ? "Yes" : "No"}</td>
+              <td>
+                <Button
+                  onClick={() => {
+                    setCurrentEditId(request.requestId);
+                    setFormData({
+                      hardwareId: request.hardwareId,
+                      dateNeeded: request.dateNeeded.split("T")[0],
+                      name: request.name,
+                      department: request.department,
+                      workstation: request.workstation,
+                      problem: request.problem,
+                      isFulfilled: request.isFulfilled,
+                    });
+                    setEditModalOpen(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button color="red" onClick={() => handleDeleteHardwareRequest(request.requestId)}>Delete</Button>
+              </td>
             </tr>
           ))}
         </tbody>
       </Table>
-
-      <Pagination
-        value={activePage}
-        onChange={setActivePage}
-        total={Math.ceil(filteredRequests.length / ITEMS_PER_PAGE)}
-      />
     </div>
   );
 };
