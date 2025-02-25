@@ -1,4 +1,3 @@
-// src/service/apiService.ts
 import axios, { AxiosInstance } from 'axios';
 
 class CustomAxiosWrapper {
@@ -72,6 +71,7 @@ class CustomAxiosWrapper {
   }
 }
 
+// ✅ Export function to create API instance
 export const useApi = () => {
   const customAxios = axios.create({
     baseURL: 'https://localhost:7234/api',
