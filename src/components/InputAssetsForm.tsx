@@ -63,12 +63,19 @@ const InputAssetsForm: React.FC = () => {
         setFilteredAssets(assets);
         return;
       }
-      const response = await axios.get(`https://localhost:7234/api/Hardware/search?name=${searchTerm}`);
+  
+      const response = await axios.get("https://localhost:7234/api/Hardware", {
+        params: {
+          nameOfHardware: searchTerm, 
+        },
+      });
+  
       setFilteredAssets(response.data);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching hardware:", error);
     }
   };
+  
 
   const handleEditHardware = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -129,6 +136,14 @@ const InputAssetsForm: React.FC = () => {
 
   return (
     <div className={styles.wrapper}>
+          <div>
+      <TextInput
+        placeholder="Search by Name"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <Button onClick={handleSearch}>Search</Button>
+    </div>
       <Button onClick={() => setAddModalOpen(true)}>Add Asset</Button>
       <Table>
         <thead>

@@ -5,7 +5,7 @@ import styles from "./SRRFForm.module.css";
 
 type HardwareRequest = {
   requestId: number;
-  hardwareId: number | null; // Allow hardwareId to be optional
+  hardwareId: number | null;
   dateNeeded: string;
   name: string;
   department: string;
@@ -22,7 +22,7 @@ const SRRFForm: React.FC = () => {
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
-    hardwareId: null, // Default to null instead of 0
+    hardwareId: null,
     dateNeeded: new Date().toISOString().split("T")[0],
     name: "",
     department: "",
@@ -59,10 +59,8 @@ const SRRFForm: React.FC = () => {
   const handleAddHardwareRequest = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      // Convert hardwareId to null if not selected
       const newRequest = {
         ...formData,
-        hardwareId: formData.hardwareId ? formData.hardwareId : null,
         dateNeeded: new Date(formData.dateNeeded).toISOString(),
       };
 
@@ -70,6 +68,7 @@ const SRRFForm: React.FC = () => {
         "/HardwareRequest",
         newRequest
       );
+
       setRequests((prev) => [...prev, addedRequest]);
       setAddModalOpen(false);
       resetFormData();
@@ -85,22 +84,19 @@ const SRRFForm: React.FC = () => {
     try {
       const editedRequest = {
         ...formData,
-        hardwareId: formData.hardwareId ? formData.hardwareId : null, // Allow null
         dateNeeded: new Date(formData.dateNeeded).toISOString(),
       };
 
-      const updatedRequest = await api.put<typeof editedRequest, HardwareRequest>(
-        `/HardwareRequest/${currentEditId}`,
-        editedRequest
-      );
+      await api.put(`/HardwareRequest/${currentEditId}`, editedRequest);
 
       setRequests((prev) =>
         prev.map((request) =>
-          request.requestId === currentEditId ? updatedRequest : request
+          request.requestId === currentEditId ? { ...request, ...editedRequest } : request
         )
       );
 
       setEditModalOpen(false);
+      setCurrentEditId(null);
       resetFormData();
     } catch (error) {
       console.error("Error editing hardware request:", error);
@@ -118,7 +114,7 @@ const SRRFForm: React.FC = () => {
 
   const resetFormData = () => {
     setFormData({
-      hardwareId: null, // Reset to null
+      hardwareId: null,
       dateNeeded: new Date().toISOString().split("T")[0],
       name: "",
       department: "",
@@ -136,18 +132,12 @@ const SRRFForm: React.FC = () => {
       <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware Request">
         <form onSubmit={handleAddHardwareRequest}>
           <Select
-            label="Select Hardware (Optional)"
+            label="Select Hardware (Required)"
             data={hardwareOptions}
             value={formData.hardwareId ? formData.hardwareId.toString() : ""}
             onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
           />
-          <TextInput
-            label="Date Needed"
-            type="date"
-            value={formData.dateNeeded}
-            onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })}
-            required
-          />
+          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
           <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
           <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
           <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
@@ -157,48 +147,53 @@ const SRRFForm: React.FC = () => {
         </form>
       </Modal>
 
+      {/* Edit Modal */}
+      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Hardware Request">
+        <form onSubmit={handleEditHardwareRequest}>
+          <Select
+            label="Select Hardware (Optional)"
+            data={hardwareOptions}
+            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
+            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
+          />
+          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
+          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
+          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
+          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
+          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
+          <Button type="submit">Update</Button>
+        </form>
+      </Modal>
+
       {/* Table */}
       <Table>
         <thead>
           <tr>
-            <th>Hardware</th>
+            <th>Request ID</th>
             <th>Date Needed</th>
             <th>Name</th>
             <th>Department</th>
             <th>Workstation</th>
             <th>Problem</th>
             <th>Is Fulfilled</th>
+            <th>Hardware ID</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {requests.map((request) => (
             <tr key={request.requestId}>
-              <td>{request.hardwareId ? request.hardwareId : "N/A"}</td>
-              <td>{new Date(request.dateNeeded).toLocaleDateString()}</td>
+              <td>{request.requestId}</td>
+              <td>{request.dateNeeded.split("T")[0]}</td>
               <td>{request.name}</td>
               <td>{request.department}</td>
               <td>{request.workstation}</td>
               <td>{request.problem}</td>
               <td>{request.isFulfilled ? "Yes" : "No"}</td>
+              <td>{request.hardwareId ?? "N/A"}</td>
               <td>
-                <Button
-                  onClick={() => {
-                    setCurrentEditId(request.requestId);
-                    setFormData({
-                      hardwareId: request.hardwareId,
-                      dateNeeded: request.dateNeeded.split("T")[0],
-                      name: request.name,
-                      department: request.department,
-                      workstation: request.workstation,
-                      problem: request.problem,
-                      isFulfilled: request.isFulfilled,
-                    });
-                    setEditModalOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>
+                <Button onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
                 <Button color="red" onClick={() => handleDeleteHardwareRequest(request.requestId)}>Delete</Button>
               </td>
             </tr>
