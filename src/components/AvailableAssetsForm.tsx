@@ -48,12 +48,10 @@ const AvailableAssetsForm: React.FC = () => {
       console.error("Error fetching input assets:", error);
     }
   };
-  
 
   // Filter available assets by excluding those in InputAssets
   useEffect(() => {
     const filtered = allAssets.filter((asset) => !inputAssets.includes(asset.hardwareId.toString()));
-
     setFilteredAssets(filtered);
   }, [allAssets, inputAssets]);
 
@@ -63,10 +61,10 @@ const AvailableAssetsForm: React.FC = () => {
     const searched = allAssets.filter(
       (asset) =>
         !inputAssets.includes(asset.hardwareId.toString()) &&
-
         (
           asset.name.toLowerCase().includes(query.toLowerCase()) ||
-          asset.datePurchased.includes(query))
+          asset.datePurchased.includes(query)
+        )
     );
     setFilteredAssets(searched);
     setActivePage(1);
@@ -79,9 +77,11 @@ const AvailableAssetsForm: React.FC = () => {
   );
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
       <h3 className={styles.title}>Available Assets</h3>
-      <div className={styles.search}>
+
+      {/* 🔍 Search Bar */}
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <TextInput
           className={styles.searchInput}
           placeholder="Search by name, or date of purchase"
@@ -89,12 +89,14 @@ const AvailableAssetsForm: React.FC = () => {
           onChange={(e) => handleSearch(e.currentTarget.value)}
         />
       </div>
-      <Table className={styles.table} striped highlightOnHover>
+
+      {/* 📋 Table of Available Assets */}
+      <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
             <th>Hardware Id</th>
             <th>Name</th>
-            <th>datePurchased</th>
+            <th>Date Purchased</th>
             <th>Available</th>
             <th>Deployed</th>
             <th>Supplier</th>
@@ -114,12 +116,13 @@ const AvailableAssetsForm: React.FC = () => {
             ))
           ) : (
             <tr>
-              <td colSpan={5} style={{ textAlign: "center" }}>No available assets found.</td>
+              <td colSpan={6} style={{ textAlign: "center" }}>No available assets found.</td>
             </tr>
           )}
         </tbody>
       </Table>
 
+      {/* Pagination */}
       <Pagination
         total={Math.ceil(filteredAssets.length / ITEMS_PER_PAGE)}
         value={activePage}
@@ -132,5 +135,3 @@ const AvailableAssetsForm: React.FC = () => {
 };
 
 export default AvailableAssetsForm;
-
-

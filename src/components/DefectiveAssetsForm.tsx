@@ -44,7 +44,6 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
     setSearchQuery(query);
     const searched = allAssets.filter(
       (asset) =>
-        
         asset.name.toLowerCase().includes(query.toLowerCase()) ||
         asset.datePurchased.includes(query)
     );
@@ -57,18 +56,23 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
     (activePage - 1) * ITEMS_PER_PAGE,
     activePage * ITEMS_PER_PAGE
   );
-  
-  
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
       <h3 className={styles.title}>Defective Assets</h3>
-      <TextInput
-        className={styles.searchInput}
-        placeholder="Search by DID, name, or date of purchase"
-        value={searchQuery}
-        onChange={(e) => handleSearch(e.currentTarget.value)}
-      />
-      <Table className={styles.table} striped highlightOnHover>
+
+      {/* 🔍 Search Bar */}
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <TextInput
+          className={styles.searchInput}
+          placeholder="Search by DID, name, or date of purchase"
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.currentTarget.value)}
+        />
+      </div>
+
+      {/* 📋 Table of Defective Assets */}
+      <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
             <th>ID</th>
@@ -80,7 +84,6 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
           </tr>
         </thead>
         <tbody>
-          
           {paginatedAssets.length > 0 ? (
             paginatedAssets.map((asset) => (
               <tr key={asset.hardwareId}>
@@ -98,12 +101,13 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
             ))
           ) : (
             <tr>
-              <td colSpan={5} style={{ textAlign: "center" }}>No defective assets found.</td>
+              <td colSpan={6} style={{ textAlign: "center" }}>No defective assets found.</td>
             </tr>
           )}
         </tbody>
       </Table>
 
+      {/* Pagination */}
       <Pagination
         total={Math.ceil(filteredAssets.length / ITEMS_PER_PAGE)}
         value={activePage}

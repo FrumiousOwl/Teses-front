@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextInput, Button, Table, Modal, Checkbox, Select } from "@mantine/core";
+import { TextInput, Button, Table, Modal, Select, Pagination } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./SRRFForm.module.css";
 
@@ -20,7 +20,7 @@ const SRRFForm: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditId, setCurrentEditId] = useState<number | null>(null);
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
-
+  
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
     dateNeeded: new Date().toISOString().split("T")[0],
@@ -31,16 +31,29 @@ const SRRFForm: React.FC = () => {
     isFulfilled: false,
   });
 
+  const [searchName, setSearchName] = useState("");
+  const [searchDepartment, setSearchDepartment] = useState("");
+  const [searchWorkstation, setSearchWorkstation] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const api = useApi();
 
   useEffect(() => {
     fetchRequests();
     fetchHardwareOptions();
-  }, []);
+  }, [searchName, searchDepartment, searchWorkstation, currentPage]);
 
   const fetchRequests = async () => {
     try {
-      const data = await api.get<HardwareRequest[]>("/HardwareRequest");
+      const queryParams = new URLSearchParams();
+      queryParams.append("Page", currentPage.toString());
+      queryParams.append("Limit", itemsPerPage.toString());
+      if (searchName) queryParams.append("Name", searchName);
+      if (searchDepartment) queryParams.append("Department", searchDepartment);
+      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
+      
+      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
       setRequests(data);
     } catch (error) {
       console.error("Error fetching hardware requests:", error);
@@ -56,118 +69,47 @@ const SRRFForm: React.FC = () => {
     }
   };
 
-  const handleAddHardwareRequest = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      const newRequest = {
-        ...formData,
-        dateNeeded: new Date(formData.dateNeeded).toISOString(),
-      };
-
-      const addedRequest = await api.post<typeof newRequest, HardwareRequest>(
-        "/HardwareRequest",
-        newRequest
-      );
-
-      setRequests((prev) => [...prev, addedRequest]);
+      if (editModalOpen && currentEditId) {
+        await api.put(`/HardwareRequest/${currentEditId}`, formData);
+      } else {
+        await api.post("/HardwareRequest", formData);
+        // If adding a new request, check if the number of requests exceeds the items per page
+        if (requests.length % itemsPerPage === 0) {
+          setCurrentPage((prevPage) => prevPage + 1);
+        }
+      }
+      fetchRequests();
       setAddModalOpen(false);
-      resetFormData();
-    } catch (error) {
-      console.error("Error adding hardware request:", error);
-    }
-  };
-
-  const handleEditHardwareRequest = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentEditId === null) return;
-
-    try {
-      const editedRequest = {
-        ...formData,
-        dateNeeded: new Date(formData.dateNeeded).toISOString(),
-      };
-
-      await api.put(`/HardwareRequest/${currentEditId}`, editedRequest);
-
-      setRequests((prev) =>
-        prev.map((request) =>
-          request.requestId === currentEditId ? { ...request, ...editedRequest } : request
-        )
-      );
-
       setEditModalOpen(false);
-      setCurrentEditId(null);
-      resetFormData();
     } catch (error) {
-      console.error("Error editing hardware request:", error);
+      console.error("Error submitting hardware request:", error);
     }
   };
 
-  const handleDeleteHardwareRequest = async (requestId: number) => {
-    try {
-      await api.delete(`/HardwareRequest/${requestId}`);
-      setRequests((prev) => prev.filter((request) => request.requestId !== requestId));
-    } catch (error) {
-      console.error("Error deleting hardware request:", error);
-    }
-  };
+  // Calculate the total number of pages based on the total number of requests
+  const totalPages = Math.ceil(requests.length / itemsPerPage);
 
-  const resetFormData = () => {
-    setFormData({
-      hardwareId: null,
-      dateNeeded: new Date().toISOString().split("T")[0],
-      name: "",
-      department: "",
-      workstation: "",
-      problem: "",
-      isFulfilled: false,
-    });
-  };
+  // Slice the requests array to display only the items for the current page
+  const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className={styles.wrapper}>
-      <Button onClick={() => setAddModalOpen(true)}>Add Hardware Request</Button>
+    <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
+      <h2 className={styles.title}>Hardware Requests</h2>
 
-      {/* Add Modal */}
-      <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware Request">
-        <form onSubmit={handleAddHardwareRequest}>
-          <Select
-            label="Select Hardware (Required)"
-            data={hardwareOptions}
-            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
-            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
-          />
-          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
-          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
-          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
-          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
-          <Button type="submit">Submit</Button>
-        </form>
-      </Modal>
+      {/* Search Filters */}
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <TextInput placeholder="Search Name" value={searchName} onChange={(e) => setSearchName(e.target.value)} />
+        <TextInput placeholder="Search Department" value={searchDepartment} onChange={(e) => setSearchDepartment(e.target.value)} />
+        <TextInput placeholder="Search Workstation" value={searchWorkstation} onChange={(e) => setSearchWorkstation(e.target.value)} />
+        <Button className={styles.searchButton} onClick={fetchRequests}>Search</Button>
+      </div>
 
-      {/* Edit Modal */}
-      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Hardware Request">
-        <form onSubmit={handleEditHardwareRequest}>
-          <Select
-            label="Select Hardware (Optional)"
-            data={hardwareOptions}
-            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
-            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
-          />
-          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
-          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
-          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
-          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
-          <Button type="submit">Update</Button>
-        </form>
-      </Modal>
+      <Button className={styles.addButton} onClick={() => setAddModalOpen(true)}>Add Hardware Request</Button>
 
-      {/* Table */}
-      <Table>
+      <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
             <th>Request ID</th>
@@ -182,7 +124,7 @@ const SRRFForm: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {requests.map((request) => (
+          {paginatedRequests.map((request) => (
             <tr key={request.requestId}>
               <td>{request.requestId}</td>
               <td>{request.dateNeeded.split("T")[0]}</td>
@@ -192,14 +134,29 @@ const SRRFForm: React.FC = () => {
               <td>{request.problem}</td>
               <td>{request.isFulfilled ? "Yes" : "No"}</td>
               <td>{request.hardwareId ?? "N/A"}</td>
-              <td>
-                <Button onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
-                <Button color="red" onClick={() => handleDeleteHardwareRequest(request.requestId)}>Delete</Button>
+              <td className={styles.actionButtons}>
+                <Button onClick={() => { setCurrentEditId(request.requestId); setEditModalOpen(true); }}>Edit</Button>
+                <Button color="red" onClick={() => api.delete(`/HardwareRequest/${request.requestId}`).then(fetchRequests)}>Delete</Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+
+      {/* Pagination */}
+      <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} />
+
+      {/* Add/Edit Request Modal */}
+      <Modal opened={addModalOpen || editModalOpen} onClose={() => { setAddModalOpen(false); setEditModalOpen(false); }} title={editModalOpen ? "Edit Hardware Request" : "Add Hardware Request"}>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
+          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
+          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
+          <Select label="Hardware (Required)" data={hardwareOptions} onChange={(value) => setFormData({ ...formData, hardwareId: value ? parseInt(value) : null })} />
+          <Button type="submit">{editModalOpen ? "Update" : "Submit"}</Button>
+        </form>
+      </Modal>
     </div>
   );
 };
