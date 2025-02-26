@@ -1,193 +1,196 @@
-/* Wrapper styling for the main container */
+/* General Page Wrapper */
 .wrapper {
-  max-width: 1300px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Title styling for the main heading */
+/* Page Title */
 .title {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: bold;
   text-align: center;
-  color: #333;
+  color: #34495e;
+  margin-bottom: 25px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* Form container styling */
+/* Form Container - Styled as a Card */
 .form {
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Input field styling */
-.input {
-  margin-bottom: 10px;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
-/* Input field focus state */
+/* Input Fields */
+.input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: 0.3s ease;
+  background-color: #ffffff;
+}
+
 .input:focus {
   border-color: #007bff;
   outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
 }
 
-/* Button styling */
+/* Button Styling */
 .button {
-  background-color: #007bff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
   color: white;
-  padding: 10px 20px;
+  padding: 14px 22px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
 }
 
-/* Button hover state */
 .button:hover {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, #0056b3, #003d80);
+  transform: scale(1.05);
 }
 
-/* Search bar container styling */
+.button:active {
+  transform: scale(0.98);
+}
+
+/* Fancy Search Bar */
 .search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 20px;
+  align-items: center;
 }
 
-/* Search input field styling */
 .searchInput {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  flex-grow: 1;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   font-size: 16px;
-  box-sizing: border-box;
   transition: border-color 0.3s ease;
 }
 
-/* Search input field focus state */
 .searchInput:focus {
   border-color: #007bff;
   outline: none;
 }
 
-/* Table styling */
+/* Column Layout for Cards */
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Fancy Table Card */
+.tableWrapper {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
 .table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
-  box-sizing: border-box;
+  margin-top: 10px;
 }
 
-/* Table header and cell styling */
 .table th,
 .table td {
-  padding: 12px;
+  padding: 16px;
   border: 1px solid #ddd;
-  text-align: left;
+  text-align: center;
+  font-size: 16px;
 }
 
-/* Table header styling */
 .table th {
-  background-color: #f2f2f2;
-  font-weight: 600;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
-/* Table row styling for even rows */
 .table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-/* Table row hover state */
 .table tr:hover {
-  background-color: #f1f1f1;
+  background-color: #eef4ff;
 }
 
-/* Add button container styling */
-.addButton {
+/* Center action buttons */
+.actionButtons {
   display: flex;
+  gap: 10px;
   justify-content: center;
-  margin: 20px 0;
+  align-items: center;
 }
 
-/* Action icon styling */
+/* Icon Styling */
 .actionIcon {
   cursor: pointer;
-  color: #007bff;
+  font-size: 20px;
   transition: color 0.3s ease;
 }
 
-/* Action icon hover state */
-.actionIcon:hover {
-  color: #0056b3;
+.actionIcon.edit {
+  color: #28a745;
 }
 
-/* Toggle button container styling */
-.toggleButton {
-  margin-bottom: 20px;
-  text-align: right;
+.actionIcon.edit:hover {
+  color: #1e7e34;
 }
 
-/* Media query for responsive design */
-@media (max-width: 768px) {
-  .wrapper {
-    padding: 15px;
-  }
+.actionIcon.delete {
+  color: #dc3545;
+}
 
-  .title {
-    font-size: 24px;
-  }
+.actionIcon.delete:hover {
+  color: #a71d2a;
+}
 
-  .input, .searchInput {
-    font-size: 14px;
-  }
+/* Add button container */
+.addButton {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
 
-  .button {
-    padding: 8px 16px;
-    font-size: 14px;
-  }
-
-  .table th, .table td {
-    padding: 10px;
-  }
-
-  .addButton {
-    margin: 15px 0;
+/* Responsive Design */
+@media (min-width: 768px) {
+  .container {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-/* Media query for very small screens */
-@media (max-width: 480px) {
-  .title {
-    font-size: 20px;
-  }
-
-  .input, .searchInput {
-    font-size: 12px;
-  }
-
-  .button {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .table th, .table td {
-    padding: 8px;
-  }
-
-  .addButton {
-    margin: 10px 0;
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }

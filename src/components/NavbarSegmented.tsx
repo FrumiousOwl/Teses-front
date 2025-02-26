@@ -13,7 +13,7 @@ const tabs = {
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
-    { link: '/dashboard/invoice-report', label: 'Invoice Report', icon: AiFillFile }, // Added Invoice Report
+    
   ],
   general: [],
 };

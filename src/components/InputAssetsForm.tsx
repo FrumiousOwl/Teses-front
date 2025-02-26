@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
-import { TextInput, Button, Table, Modal, Pagination } from '@mantine/core';
-import axios from 'axios';
-import { useApi } from '../service/apiService';
-import styles from './InputAssetsForm.module.css';
+import React, { useState, useEffect } from "react";
+import { TextInput, Button, Table, Modal, Pagination } from "@mantine/core";
+import { useApi } from "../service/apiService";
+import styles from "./InputAssetsForm.module.css";
 
 type Hardware = {
   hardwareId: number;
@@ -17,135 +14,154 @@ type Hardware = {
   supplier: string;
 };
 
-const ITEMS_PER_PAGE = 10;
-
 const InputAssetsForm: React.FC = () => {
   const [assets, setAssets] = useState<Hardware[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Hardware[]>([]);
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [searchName, setSearchName] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  const [searchSupplier, setSearchSupplier] = useState("");
+
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [currentEditIndex, setCurrentEditIndex] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [currentEditAsset, setCurrentEditAsset] = useState<Hardware | null>(null);
+
   const [formData, setFormData] = useState<Hardware>({
     hardwareId: 0,
-    name: '',
-    description: '',
-    datePurchased: new Date().toISOString().split('T')[0],
+    name: "",
+    description: "",
+    datePurchased: new Date().toISOString().split("T")[0],
     defective: 0,
     available: 0,
     deployed: 0,
-    supplier: '',
+    supplier: "",
   });
 
-  const [activePage, setActivePage] = useState(1);
-  const customAxios = useApi();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const api = useApi();
 
   useEffect(() => {
-    const fetchHardware = async () => {
-      try {
-        const response = await axios.get('https://localhost:7234/api/Hardware');
-        const hardwareWithParsedDates = response.data.map((hardware: Hardware) => ({
-          ...hardware,
-          datePurchased: new Date(hardware.datePurchased).toISOString().split('T')[0],
-        }));
-        setAssets(hardwareWithParsedDates);
-        setFilteredAssets(hardwareWithParsedDates);
-      } catch (error) {
-        console.error('Error fetching hardware:', error);
-      }
-    };
-    fetchHardware();
+    fetchAssets();
   }, []);
 
-  const handleSearch = async () => {
+  const fetchAssets = async () => {
     try {
-      if (!searchTerm) {
-        setFilteredAssets(assets);
-        return;
-      }
-  
-      const response = await axios.get("https://localhost:7234/api/Hardware", {
-        params: {
-          nameOfHardware: searchTerm, 
-        },
-      });
-  
-      setFilteredAssets(response.data);
+      const data = await api.get<Hardware[]>("/Hardware");
+      setAssets(data);
+      setFilteredAssets(data);
     } catch (error) {
       console.error("Error fetching hardware:", error);
     }
   };
-  
 
-  const handleEditHardware = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      const editedHardware = {
-        ...formData,
-        datePurchased: new Date(formData.datePurchased).toISOString(),
-      };
-      await customAxios.put(`/Hardware/${editedHardware.hardwareId}`, editedHardware);
-
-      const updatedAssets = assets.map(asset =>
-        asset.hardwareId === editedHardware.hardwareId ? editedHardware : asset
+  const handleSearch = () => {
+    const filtered = assets.filter((asset) => {
+      return (
+        asset.name.toLowerCase().includes(searchName.toLowerCase()) &&
+        asset.datePurchased.includes(searchDate) &&
+        asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase())
       );
-      setAssets(updatedAssets);
-      setFilteredAssets(updatedAssets);
+    });
+    setFilteredAssets(filtered);
+    setCurrentPage(1); // Reset to the first page after search
+  };
 
+  const handleEditClick = (asset: Hardware) => {
+    setCurrentEditAsset(asset);
+    setFormData(asset);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteClick = async (hardwareId: number) => {
+    try {
+      await api.delete(`/Hardware/${hardwareId}`);
+      fetchAssets();
+    } catch (error) {
+      console.error("Error deleting hardware:", error);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await api.put(`/Hardware/${formData.hardwareId}`, formData);
       setEditModalOpen(false);
-      setFormData({
-        hardwareId: 0,
-        name: '',
-        description: '',
-        datePurchased: new Date().toISOString().split('T')[0],
-        defective: 0,
-        available: 0,
-        deployed: 0,
-        supplier: '',
-      });
+      fetchAssets();
     } catch (error) {
-      console.error('Error editing hardware:', error);
+      console.error("Error updating hardware:", error);
     }
   };
 
-  const handleDeleteHardware = async (hardwareId: number) => {
-    try {
-      await customAxios.delete(`/Hardware/${hardwareId}`);
-      const updatedAssets = assets.filter(asset => asset.hardwareId !== hardwareId);
-      setAssets(updatedAssets);
-      setFilteredAssets(updatedAssets);
-    } catch (error) {
-      console.error('Error deleting hardware:', error);
-    }
+  const handleAddClick = () => {
+    setFormData({
+      hardwareId: 0,
+      name: "",
+      description: "",
+      datePurchased: new Date().toISOString().split("T")[0],
+      defective: 0,
+      available: 0,
+      deployed: 0,
+      supplier: "",
+    });
+    setAddModalOpen(true);
   };
 
-  const handleAddHardware = async () => {
+  const handleSaveAdd = async () => {
     try {
-      const newHardware: Hardware = {
-        ...formData,
-        datePurchased: new Date(formData.datePurchased).toISOString(),
-      };
-      const response = await customAxios.post<Hardware, Hardware>('/Hardware', newHardware);
-      setAssets(prev => [...prev, response]);
-      setFilteredAssets(prev => [...prev, response]);
+      await api.post("/Hardware", formData);
       setAddModalOpen(false);
+      fetchAssets();
     } catch (error) {
-      console.error('Error adding hardware:', error);
+      console.error("Error adding hardware:", error);
     }
   };
+
+  // Calculate the total number of pages based on the filtered assets
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+
+  // Slice the filtered assets to display only the items for the current page
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
-    <div className={styles.wrapper}>
-          <div>
-      <TextInput
-        placeholder="Search by Name"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <Button onClick={handleSearch}>Search</Button>
-    </div>
-      <Button onClick={() => setAddModalOpen(true)}>Add Asset</Button>
-      <Table>
+    <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
+      <h2 className={styles.title}>Asset Management</h2>
+
+      {/* 🔍 Search Bar */}
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <TextInput
+          placeholder="Search Name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          className={styles.searchInput}
+        />
+        <TextInput
+          placeholder="Search Date Purchased"
+          type="date"
+          value={searchDate}
+          onChange={(e) => setSearchDate(e.target.value)}
+          className={styles.searchInput}
+        />
+        <TextInput
+          placeholder="Search Supplier"
+          value={searchSupplier}
+          onChange={(e) => setSearchSupplier(e.target.value)}
+          className={styles.searchInput}
+        />
+        <Button className={styles.searchButton} onClick={handleSearch}>
+          Search
+        </Button>
+      </div>
+
+      {/* ➕ Add Asset Button */}
+      <Button className={styles.addButton} onClick={handleAddClick}>
+        Add Asset
+      </Button>
+
+      {/* 📋 Table of Assets with Action Buttons */}
+      <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
             <th>Index</th>
@@ -161,7 +177,7 @@ const InputAssetsForm: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredAssets.map((hardware, index) => (
+          {paginatedAssets.map((hardware, index) => (
             <tr key={hardware.hardwareId}>
               <td>{index + 1}</td> 
               <td>{hardware.hardwareId}</td>
@@ -172,47 +188,49 @@ const InputAssetsForm: React.FC = () => {
               <td>{hardware.available}</td>
               <td>{hardware.deployed}</td>
               <td>{hardware.supplier}</td>
-              <td>
-                <Button
-                  onClick={() => {
-                    setCurrentEditIndex(hardware.hardwareId);
-                    setFormData(hardware);
-                    setEditModalOpen(true);
-                  }}
-                >
+              <td className={styles.actionButtons}>
+                <Button size="xs" onClick={() => handleEditClick(hardware)}>
                   Edit
                 </Button>
-                <Button color="red" onClick={() => handleDeleteHardware(hardware.hardwareId)}>Delete</Button>
+                <Button size="xs" color="red" onClick={() => handleDeleteClick(hardware.hardwareId)}>
+                  Delete
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
 
-      <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware">
-        <form onSubmit={handleAddHardware}>
-          <TextInput label="Name" onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Description" onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
-          <TextInput label="Date Purchased" type="date" onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
-          <TextInput label="Defective" type="number" onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })} required />
-          <TextInput label="Available" type="number" onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })} required />
-          <TextInput label="Deployed" type="number" onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })} required />
-          <TextInput label="Supplier" onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-          <Button type="submit">Submit</Button>
-        </form>
+      {/* Pagination */}
+      <Pagination
+        total={totalPages}
+        value={currentPage}
+        onChange={setCurrentPage}
+        style={{ marginTop: "20px" }}
+      />
+
+      {/* 📝 Edit Asset Modal */}
+      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Asset">
+        <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+        <TextInput label="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
+        <TextInput label="Date Purchased" type="date" value={formData.datePurchased} onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
+        <TextInput label="Defective" type="number" value={formData.defective} onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) || 0 })} />
+        <TextInput label="Available" type="number" value={formData.available} onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) || 0 })} />
+        <TextInput label="Deployed" type="number" value={formData.deployed} onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) || 0 })} />
+        <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
+        <Button onClick={handleSaveEdit}>Save</Button>
       </Modal>
 
-      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Hardware">
-        <form onSubmit={handleEditHardware}>
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
-          <TextInput label="Date Purchased" type="date" value={formData.datePurchased} onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
-          <TextInput label="Defective" type="number" value={formData.defective} onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) })} required />
-          <TextInput label="Available" type="number" value={formData.available} onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) })} required />
-          <TextInput label="Deployed" type="number" value={formData.deployed} onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) })} required />
-          <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-          <Button type="submit">Save Changes</Button>
-        </form>
+      {/* ➕ Add Asset Modal */}
+      <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Asset">
+        <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+        <TextInput label="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
+        <TextInput label="Date Purchased" type="date" value={formData.datePurchased} onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })} required />
+        <TextInput label="Defective" type="number" value={formData.defective} onChange={(e) => setFormData({ ...formData, defective: Number(e.target.value) || 0 })} />
+        <TextInput label="Available" type="number" value={formData.available} onChange={(e) => setFormData({ ...formData, available: Number(e.target.value) || 0 })} />
+        <TextInput label="Deployed" type="number" value={formData.deployed} onChange={(e) => setFormData({ ...formData, deployed: Number(e.target.value) || 0 })} />
+        <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
+        <Button onClick={handleSaveAdd}>Save</Button>
       </Modal>
     </div>
   );
