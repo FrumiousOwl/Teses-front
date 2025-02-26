@@ -21,26 +21,26 @@ const SRRFForm: React.FC = () => {
   const [currentEditId, setCurrentEditId] = useState<number | null>(null);
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
 
-  const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
-    hardwareId: null,
-    dateNeeded: new Date().toISOString().split("T")[0],
-    name: "",
-    department: "",
-    workstation: "",
-    problem: "",
-    isFulfilled: false,
-  });
+  // Search states
+  const [searchName, setSearchName] = useState("");
+  const [searchDepartment, setSearchDepartment] = useState("");
+  const [searchWorkstation, setSearchWorkstation] = useState("");
 
   const api = useApi();
 
   useEffect(() => {
     fetchRequests();
     fetchHardwareOptions();
-  }, []);
+  }, [searchName, searchDepartment, searchWorkstation]); // Fetch data when search filters change
 
   const fetchRequests = async () => {
     try {
-      const data = await api.get<HardwareRequest[]>("/HardwareRequest");
+      const queryParams = new URLSearchParams();
+      if (searchName) queryParams.append("Name", searchName);
+      if (searchDepartment) queryParams.append("Department", searchDepartment);
+      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
+      
+      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
       setRequests(data);
     } catch (error) {
       console.error("Error fetching hardware requests:", error);
@@ -56,115 +56,29 @@ const SRRFForm: React.FC = () => {
     }
   };
 
-  const handleAddHardwareRequest = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      const newRequest = {
-        ...formData,
-        dateNeeded: new Date(formData.dateNeeded).toISOString(),
-      };
-
-      const addedRequest = await api.post<typeof newRequest, HardwareRequest>(
-        "/HardwareRequest",
-        newRequest
-      );
-
-      setRequests((prev) => [...prev, addedRequest]);
-      setAddModalOpen(false);
-      resetFormData();
-    } catch (error) {
-      console.error("Error adding hardware request:", error);
-    }
-  };
-
-  const handleEditHardwareRequest = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentEditId === null) return;
-
-    try {
-      const editedRequest = {
-        ...formData,
-        dateNeeded: new Date(formData.dateNeeded).toISOString(),
-      };
-
-      await api.put(`/HardwareRequest/${currentEditId}`, editedRequest);
-
-      setRequests((prev) =>
-        prev.map((request) =>
-          request.requestId === currentEditId ? { ...request, ...editedRequest } : request
-        )
-      );
-
-      setEditModalOpen(false);
-      setCurrentEditId(null);
-      resetFormData();
-    } catch (error) {
-      console.error("Error editing hardware request:", error);
-    }
-  };
-
-  const handleDeleteHardwareRequest = async (requestId: number) => {
-    try {
-      await api.delete(`/HardwareRequest/${requestId}`);
-      setRequests((prev) => prev.filter((request) => request.requestId !== requestId));
-    } catch (error) {
-      console.error("Error deleting hardware request:", error);
-    }
-  };
-
-  const resetFormData = () => {
-    setFormData({
-      hardwareId: null,
-      dateNeeded: new Date().toISOString().split("T")[0],
-      name: "",
-      department: "",
-      workstation: "",
-      problem: "",
-      isFulfilled: false,
-    });
-  };
-
   return (
     <div className={styles.wrapper}>
-      <Button onClick={() => setAddModalOpen(true)}>Add Hardware Request</Button>
+      <h2>Hardware Requests</h2>
 
-      {/* Add Modal */}
-      <Modal opened={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add Hardware Request">
-        <form onSubmit={handleAddHardwareRequest}>
-          <Select
-            label="Select Hardware (Required)"
-            data={hardwareOptions}
-            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
-            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
-          />
-          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
-          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
-          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
-          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
-          <Button type="submit">Submit</Button>
-        </form>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Hardware Request">
-        <form onSubmit={handleEditHardwareRequest}>
-          <Select
-            label="Select Hardware (Optional)"
-            data={hardwareOptions}
-            value={formData.hardwareId ? formData.hardwareId.toString() : ""}
-            onChange={(value) => setFormData({ ...formData, hardwareId: value ? Number(value) : null })}
-          />
-          <TextInput label="Date Needed" type="date" value={formData.dateNeeded} onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })} required />
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-          <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
-          <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
-          <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
-          <Checkbox label="Is Fulfilled" checked={formData.isFulfilled} onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })} />
-          <Button type="submit">Update</Button>
-        </form>
-      </Modal>
+      {/* Search Filters */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        <TextInput
+          placeholder="Search Name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
+        <TextInput
+          placeholder="Search Department"
+          value={searchDepartment}
+          onChange={(e) => setSearchDepartment(e.target.value)}
+        />
+        <TextInput
+          placeholder="Search Workstation"
+          value={searchWorkstation}
+          onChange={(e) => setSearchWorkstation(e.target.value)}
+        />
+        <Button onClick={fetchRequests}>Search</Button>
+      </div>
 
       {/* Table */}
       <Table>
@@ -178,7 +92,6 @@ const SRRFForm: React.FC = () => {
             <th>Problem</th>
             <th>Is Fulfilled</th>
             <th>Hardware ID</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -192,10 +105,6 @@ const SRRFForm: React.FC = () => {
               <td>{request.problem}</td>
               <td>{request.isFulfilled ? "Yes" : "No"}</td>
               <td>{request.hardwareId ?? "N/A"}</td>
-              <td>
-                <Button onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
-                <Button color="red" onClick={() => handleDeleteHardwareRequest(request.requestId)}>Delete</Button>
-              </td>
             </tr>
           ))}
         </tbody>
