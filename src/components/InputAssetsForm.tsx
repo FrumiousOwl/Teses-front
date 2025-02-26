@@ -127,7 +127,7 @@ const InputAssetsForm: React.FC = () => {
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
-      <h2 className={styles.title}>Asset Management</h2>
+      <h2 className={styles.title}>Hardware Management</h2>
 
       {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>

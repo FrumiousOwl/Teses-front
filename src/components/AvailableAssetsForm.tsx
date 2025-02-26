@@ -34,7 +34,7 @@ const AvailableAssetsForm: React.FC = () => {
       const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
     } catch (error) {
-      console.error("Error fetching available assets:", error);
+      console.error("Error fetching available hardware:", error);
     }
   };
 
@@ -78,7 +78,7 @@ const AvailableAssetsForm: React.FC = () => {
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
-      <h3 className={styles.title}>Available Assets</h3>
+      <h3 className={styles.title}>Available Hardware</h3>
 
       {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
@@ -94,6 +94,7 @@ const AvailableAssetsForm: React.FC = () => {
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
+            <th>Index</th>
             <th>Hardware Id</th>
             <th>Name</th>
             <th>Date Purchased</th>
@@ -104,8 +105,9 @@ const AvailableAssetsForm: React.FC = () => {
         </thead>
         <tbody>
           {paginatedAssets.length > 0 ? (
-            paginatedAssets.map((asset) => (
+            paginatedAssets.map((asset, index) => (
               <tr key={asset.hardwareId}>
+                <td>{index + 1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
                 <td>{asset.datePurchased}</td>
@@ -116,7 +118,7 @@ const AvailableAssetsForm: React.FC = () => {
             ))
           ) : (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center" }}>No available assets found.</td>
+              <td colSpan={6} style={{ textAlign: "center" }}>No available hardware found.</td>
             </tr>
           )}
         </tbody>

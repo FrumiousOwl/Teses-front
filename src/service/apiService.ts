@@ -71,13 +71,12 @@ class CustomAxiosWrapper {
   }
 }
 
-// ✅ Export function to create API instance
 export const useApi = () => {
   const customAxios = axios.create({
     baseURL: 'https://localhost:7234/api',
   });
 
-  // Add a request interceptor to include the token in the Authorization header
+
   customAxios.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("token");

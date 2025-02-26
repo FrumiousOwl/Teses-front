@@ -20,13 +20,6 @@ const SRRFForm: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditId, setCurrentEditId] = useState<number | null>(null);
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
-<<<<<<< HEAD
-
-  // Search states
-  const [searchName, setSearchName] = useState("");
-  const [searchDepartment, setSearchDepartment] = useState("");
-  const [searchWorkstation, setSearchWorkstation] = useState("");
-=======
   
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
@@ -37,7 +30,6 @@ const SRRFForm: React.FC = () => {
     problem: "",
     isFulfilled: false,
   });
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
 
   const [searchName, setSearchName] = useState("");
   const [searchDepartment, setSearchDepartment] = useState("");
@@ -50,20 +42,13 @@ const SRRFForm: React.FC = () => {
   useEffect(() => {
     fetchRequests();
     fetchHardwareOptions();
-<<<<<<< HEAD
-  }, [searchName, searchDepartment, searchWorkstation]); // Fetch data when search filters change
-=======
   }, [searchName, searchDepartment, searchWorkstation, currentPage]);
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
 
   const fetchRequests = async () => {
     try {
       const queryParams = new URLSearchParams();
-<<<<<<< HEAD
-=======
       queryParams.append("Page", currentPage.toString());
       queryParams.append("Limit", itemsPerPage.toString());
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
       if (searchName) queryParams.append("Name", searchName);
       if (searchDepartment) queryParams.append("Department", searchDepartment);
       if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
@@ -84,30 +69,6 @@ const SRRFForm: React.FC = () => {
     }
   };
 
-<<<<<<< HEAD
-  return (
-    <div className={styles.wrapper}>
-      <h2>Hardware Requests</h2>
-
-      {/* Search Filters */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-        <TextInput
-          placeholder="Search Name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-        />
-        <TextInput
-          placeholder="Search Department"
-          value={searchDepartment}
-          onChange={(e) => setSearchDepartment(e.target.value)}
-        />
-        <TextInput
-          placeholder="Search Workstation"
-          value={searchWorkstation}
-          onChange={(e) => setSearchWorkstation(e.target.value)}
-        />
-        <Button onClick={fetchRequests}>Search</Button>
-=======
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -144,7 +105,6 @@ const SRRFForm: React.FC = () => {
         <TextInput placeholder="Search Department" value={searchDepartment} onChange={(e) => setSearchDepartment(e.target.value)} />
         <TextInput placeholder="Search Workstation" value={searchWorkstation} onChange={(e) => setSearchWorkstation(e.target.value)} />
         <Button className={styles.searchButton} onClick={fetchRequests}>Search</Button>
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
       </div>
 
       <Button className={styles.addButton} onClick={() => setAddModalOpen(true)}>Add Hardware Request</Button>
@@ -152,6 +112,7 @@ const SRRFForm: React.FC = () => {
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
+            <th>Index</th>
             <th>Request ID</th>
             <th>Date Needed</th>
             <th>Name</th>
@@ -160,15 +121,13 @@ const SRRFForm: React.FC = () => {
             <th>Problem</th>
             <th>Is Fulfilled</th>
             <th>Hardware ID</th>
-<<<<<<< HEAD
-=======
             <th>Actions</th>
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
           </tr>
         </thead>
         <tbody>
-          {paginatedRequests.map((request) => (
+          {paginatedRequests.map((request, index) => (
             <tr key={request.requestId}>
+              <td>{index +1}</td>
               <td>{request.requestId}</td>
               <td>{request.dateNeeded.split("T")[0]}</td>
               <td>{request.name}</td>
@@ -177,13 +136,10 @@ const SRRFForm: React.FC = () => {
               <td>{request.problem}</td>
               <td>{request.isFulfilled ? "Yes" : "No"}</td>
               <td>{request.hardwareId ?? "N/A"}</td>
-<<<<<<< HEAD
-=======
               <td className={styles.actionButtons}>
                 <Button onClick={() => { setCurrentEditId(request.requestId); setEditModalOpen(true); }}>Edit</Button>
                 <Button color="red" onClick={() => api.delete(`/HardwareRequest/${request.requestId}`).then(fetchRequests)}>Delete</Button>
               </td>
->>>>>>> deb6eb29b2a6198aebc5b29592c9760e332c33da
             </tr>
           ))}
         </tbody>

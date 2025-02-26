@@ -14,7 +14,7 @@ type Asset = {
 const ITEMS_PER_PAGE = 3;
 
 interface DefectiveAssetsFormProps {
-  onSelectAsset: (asset: Asset) => void; // Callback to send selected asset
+  onSelectAsset: (asset: Asset) => void; 
 }
 
 const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset }) => {
@@ -35,7 +35,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
       setAllAssets(data);
       setFilteredAssets(data);
     } catch (error) {
-      console.error("Error fetching defective assets:", error);
+      console.error("Error fetching defective hardware:", error);
     }
   };
 
@@ -59,13 +59,13 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
-      <h3 className={styles.title}>Defective Assets</h3>
+      <h3 className={styles.title}>Defective Hardware</h3>
 
       {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <TextInput
           className={styles.searchInput}
-          placeholder="Search by DID, name, or date of purchase"
+          placeholder="Search by name, or date of purchased"
           value={searchQuery}
           onChange={(e) => handleSearch(e.currentTarget.value)}
         />
@@ -75,6 +75,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
+            <th>Index</th>
             <th>ID</th>
             <th>Name</th>
             <th>Date of Purchase</th>
@@ -85,8 +86,9 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
         </thead>
         <tbody>
           {paginatedAssets.length > 0 ? (
-            paginatedAssets.map((asset) => (
+            paginatedAssets.map((asset, index) => (
               <tr key={asset.hardwareId}>
+                <td>{index +1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
                 <td>{asset.datePurchased}</td>
@@ -101,7 +103,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
             ))
           ) : (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center" }}>No defective assets found.</td>
+              <td colSpan={6} style={{ textAlign: "center" }}>No defective hardware found.</td>
             </tr>
           )}
         </tbody>
