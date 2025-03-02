@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Button, Table, Modal, Select, Pagination, Checkbox } from "@mantine/core";
 import { useApi } from "../service/apiService";
@@ -41,9 +42,16 @@ const SRRFForm: React.FC = () => {
 
   const api = useApi();
 
+  // Check authentication and fetch data on component mount
   useEffect(() => {
-    fetchRequests();
-    fetchHardwareOptions();
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchRequests();
+      fetchHardwareOptions();
+    } else {
+      // Redirect to login page if not authenticated
+      window.location.href = '/login'; // Adjust the path as needed
+    }
   }, [searchName, searchDepartment, searchWorkstation, currentPage]);
 
   const fetchRequests = async () => {

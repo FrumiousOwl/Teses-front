@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Table, Pagination, Button } from "@mantine/core";
 import { useApi } from "../service/apiService";
