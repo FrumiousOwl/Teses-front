@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { Text, Tooltip } from '@mantine/core';
 import { IconLogout } from '@tabler/icons-react';
-import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle, AiFillFile } from 'react-icons/ai';
+import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import classes from './NavbarSegmented.module.css';
@@ -17,6 +16,7 @@ const tabs = {
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
+    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: AiFillContainer }, // Moved here
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
   ],
   RequestManager: [
@@ -32,14 +32,13 @@ const tabs = {
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
-    
   ],
 };
 
 export function NavbarSegmented() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [active, setActive] = useState(location.pathname);
+  const [, setActive] = useState(location.pathname);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // Fetch the user's role from local storage or API
@@ -98,7 +97,9 @@ export function NavbarSegmented() {
           </Text>
         </div>
 
-        <div className={classes.navbarMain}>{links}</div>
+        <div className={classes.navbarMain}>
+          {links}
+        </div>
 
         <div className={classes.footer}>
           <a href="#" className={classes.link} onClick={handleLogout}>
@@ -107,6 +108,7 @@ export function NavbarSegmented() {
           </a>
         </div>
       </nav>
+
       <div className={classes.content}>
         <Outlet />
       </div>
