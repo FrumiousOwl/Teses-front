@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-import { TextInput, Table, Pagination, Button } from "@mantine/core";
+import { TextInput, Table, Pagination } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./DefectiveAssetsForm.module.css";
 
@@ -82,24 +83,20 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
             <th>Date of Purchase</th>
             <th>Defective</th>
             <th>Supplier</th>
-            <th>Action</th>
+            {/* Removed the "Action" column header */}
           </tr>
         </thead>
         <tbody>
           {paginatedAssets.length > 0 ? (
             paginatedAssets.map((asset, index) => (
               <tr key={asset.hardwareId}>
-                <td>{index +1}</td>
+                <td>{index + 1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
                 <td>{asset.datePurchased}</td>
                 <td>{asset.defective}</td>
                 <td>{asset.supplier}</td>
-                <td>
-                  <Button size="xs" onClick={() => onSelectAsset(asset)}>
-                    Select
-                  </Button>
-                </td>
+                {/* Removed the "Select" button */}
               </tr>
             ))
           ) : (
