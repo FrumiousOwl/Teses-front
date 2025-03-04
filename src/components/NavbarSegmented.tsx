@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Text, Tooltip } from '@mantine/core';
-import { IconLogout } from '@tabler/icons-react';
-import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle } from 'react-icons/ai';
+import { IconLogout, IconAlertTriangle, IconAlertOctagon } from '@tabler/icons-react';
+import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillPlusCircle, AiFillContainer } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import classes from './NavbarSegmented.module.css';
@@ -16,21 +16,19 @@ const tabs = {
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
-    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: AiFillContainer }, // Moved here
-    { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: IconAlertTriangle },
   ],
   RequestManager: [
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
-    { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
-    { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
-    { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
   ],
   SystemManager: [
+    { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
+    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: IconAlertTriangle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
   ],
 };
@@ -40,14 +38,35 @@ export function NavbarSegmented() {
   const location = useLocation();
   const [, setActive] = useState(location.pathname);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
-  // Fetch the user's role from local storage or API
+  // Fetch the user's role and username from the token
   useEffect(() => {
     const token = localStorage.getItem('token');
+
     if (token) {
-      // Decode the token to get the user's role (example implementation)
-      const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
-      setUserRole(decodedToken.role); // Assuming the role is stored in the token
+      try {
+        // Decode the token to get the user's role and username
+        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
+        console.log("Decoded Token:", decodedToken); // Debugging
+
+        // Set the username from the token's given_name field
+        if (decodedToken.given_name) {
+          setUsername(decodedToken.given_name);
+        } else {
+          console.error("given_name not found in token");
+        }
+
+        // Set the role from the token's role field
+        if (decodedToken.role) {
+          setUserRole(decodedToken.role);
+        } else {
+          console.error("Role not found in token");
+        }
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        navigate('/login'); // Redirect to login if token is invalid
+      }
     } else {
       navigate('/login'); // Redirect to login if no token is found
     }
@@ -102,6 +121,14 @@ export function NavbarSegmented() {
         </div>
 
         <div className={classes.footer}>
+          {/* Profile Section */}
+          <div className={classes.profileSection}>
+            <Text size="sm" className={classes.username}>
+              {username || "Guest"}
+            </Text>
+          </div>
+
+          {/* Logout Button */}
           <a href="#" className={classes.link} onClick={handleLogout}>
             <IconLogout className={classes.linkIcon} stroke={1.5} />
             <span className={classes.linkText}>Logout</span>

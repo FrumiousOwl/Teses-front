@@ -23,6 +23,8 @@ const SRRFForm: React.FC = () => {
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null); // Add state for user role
+  const [username, setUsername] = useState<string | null>(null); // Add state for username
 
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
@@ -41,6 +43,47 @@ const SRRFForm: React.FC = () => {
   const itemsPerPage = 10;
 
   const api = useApi();
+
+  // Fetch the username and role from the token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        // Decode the token to get the username and role
+        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
+        const username = decodedToken.given_name; // Extract the username from the token
+        const role = decodedToken.role; // Extract the role from the token
+
+        // Set the username and role
+        setUsername(username);
+        setUserRole(role);
+
+        // Set the username in the form data
+        setFormData((prevData) => ({
+          ...prevData,
+          name: username || "", // Use the username or fallback to an empty string
+        }));
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
+
+  // Reset form data when the Add Modal is opened
+  useEffect(() => {
+    if (addModalOpen) {
+      setFormData((prevData) => ({
+        ...prevData,
+        hardwareId: null,
+        dateNeeded: new Date().toISOString().slice(0, 16), // Reset to today's date and time
+        department: "",
+        workstation: "",
+        problem: "",
+        isFulfilled: false,
+        name: username || "", // Retain the username
+      }));
+    }
+  }, [addModalOpen, username]);
 
   // Check authentication and fetch data on component mount
   useEffect(() => {
@@ -186,7 +229,10 @@ const SRRFForm: React.FC = () => {
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
                   <Button size="xs" onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
-                  <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>Delete</Button>
+                  {/* Conditionally render the Delete button for RequestManager role */}
+                  {userRole === "RequestManager" && (
+  <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>Delete</Button>
+)}
                 </td>
               </tr>
             ))}
@@ -205,7 +251,12 @@ const SRRFForm: React.FC = () => {
         size="sm"
       >
         <form className={styles.form} onSubmit={handleSubmit}>
-          <TextInput label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+          <TextInput
+            label="Name"
+            value={formData.name}
+            readOnly // Make the name field read-only
+            required
+          />
           <TextInput label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required />
           <TextInput label="Workstation" value={formData.workstation} onChange={(e) => setFormData({ ...formData, workstation: e.target.value })} required />
           <TextInput label="Problem" value={formData.problem} onChange={(e) => setFormData({ ...formData, problem: e.target.value })} required />
@@ -221,12 +272,17 @@ const SRRFForm: React.FC = () => {
           />
 
           <Select label="Hardware (Required)" data={hardwareOptions} onChange={(value) => setFormData({ ...formData, hardwareId: value ? parseInt(value) : null })} />
-          <Checkbox
-            label="Is Fulfilled"
-            checked={formData.isFulfilled}
-            onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })}
-            style={{ marginTop: "10px" }}
-          />
+
+          {/* Conditionally render the "Is Fulfilled" checkbox for RequestManager role */}
+          {userRole === "RequestManager" && (
+            <Checkbox
+              label="Is Fulfilled"
+              checked={formData.isFulfilled}
+              onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })}
+              style={{ marginTop: "10px" }}
+            />
+          )}
+
           <Button type="submit" style={{ marginTop: "10px" }}>{editModalOpen ? "Update" : "Submit"}</Button>
         </form>
       </Modal>
