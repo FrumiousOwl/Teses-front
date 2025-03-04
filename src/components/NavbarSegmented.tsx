@@ -1,35 +1,81 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Text, Tooltip } from '@mantine/core';
 import { IconLogout } from '@tabler/icons-react';
-import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle, AiFillFile } from 'react-icons/ai';
+import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillContainer, AiFillPlusCircle } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import classes from './NavbarSegmented.module.css';
 
+// Define the tabs for each role
 const tabs = {
-  account: [
+  User: [
+    { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+  ],
+  InventoryManager: [
+    { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+    { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
+    { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
+    { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
+    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: AiFillContainer }, // Moved here
+    { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+  ],
+  RequestManager: [
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
-    
   ],
-  general: [],
+  SystemManager: [
+    { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+    { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
+    { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
+    { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
+    { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+  ],
 };
 
 export function NavbarSegmented() {
-  const [section] = useState<'account' | 'general'>('account');
   const navigate = useNavigate();
   const location = useLocation();
   const [, setActive] = useState(location.pathname);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Fetch the user's role from local storage or API
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Decode the token to get the user's role (example implementation)
+      const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
+      setUserRole(decodedToken.role); // Assuming the role is stored in the token
+    } else {
+      navigate('/login'); // Redirect to login if no token is found
+    }
+  }, [navigate]);
 
   const handleLogout = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    navigate('/');
+    localStorage.removeItem('token'); // Clear the token
+    navigate('/'); // Redirect to the home page
   };
 
-  const links = tabs[section].map((item) => (
+  // Get the tabs based on the user's role
+  const getTabsForRole = () => {
+    switch (userRole) {
+      case 'User':
+        return tabs.User;
+      case 'InventoryManager':
+        return tabs.InventoryManager;
+      case 'RequestManager':
+        return tabs.RequestManager;
+      case 'SystemManager':
+        return tabs.SystemManager;
+      default:
+        return [];
+    }
+  };
+
+  const links = getTabsForRole().map((item) => (
     <Tooltip label={item.label} position="right" withArrow key={item.label}>
       <Link
         className={`${classes.link} ${location.pathname === item.link ? classes.active : ''}`}
@@ -51,7 +97,9 @@ export function NavbarSegmented() {
           </Text>
         </div>
 
-        <div className={classes.navbarMain}>{links}</div>
+        <div className={classes.navbarMain}>
+          {links}
+        </div>
 
         <div className={classes.footer}>
           <a href="#" className={classes.link} onClick={handleLogout}>
@@ -60,6 +108,7 @@ export function NavbarSegmented() {
           </a>
         </div>
       </nav>
+
       <div className={classes.content}>
         <Outlet />
       </div>

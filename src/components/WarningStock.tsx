@@ -2,31 +2,26 @@
 import React, { useState, useEffect } from "react";
 import { TextInput, Table, Pagination } from "@mantine/core";
 import { useApi } from "../service/apiService";
-import styles from "./AvailableAssetsForm.module.css";
+import styles from "./WarningStock.module.css";
 
 type Asset = {
   hardwareId: number;
   name: string;
-  datePurchased: string;
-  deployed: number;
   available: number;
-  supplier: string;
 };
 
 const ITEMS_PER_PAGE = 3;
 
-const AvailableAssetsForm: React.FC = () => {
+const WarningStock: React.FC = () => {
   const api = useApi();
   const [activePage, setActivePage] = useState<number>(1);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
-  const [inputAssets, setInputAssets] = useState<string[]>([]); // Stores AIDs of input assets
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Fetch data when component mounts
   useEffect(() => {
     fetchAssets();
-    fetchInputAssets();
   }, []);
 
   // Fetch available assets
@@ -39,32 +34,21 @@ const AvailableAssetsForm: React.FC = () => {
     }
   };
 
-  // Fetch input assets (AIDs only)
-  const fetchInputAssets = async () => {
-    try {
-      const data = await api.get<{ hardwareId: string }[]>("https://localhost:7234/api/Hardware");
-      console.log("Fetched Input Assets:", data); // Debugging
-      setInputAssets(data.map((asset) => asset.hardwareId));
-    } catch (error) {
-      console.error("Error fetching input assets:", error);
-    }
-  };
-
-  // Filter available assets by excluding those in InputAssets
+  // Filter low stock assets (available <= 10)
   useEffect(() => {
-    const filtered = allAssets.filter((asset) => !inputAssets.includes(asset.hardwareId.toString()));
-    setFilteredAssets(filtered);
-  }, [allAssets, inputAssets]);
+    const lowStockAssets = allAssets.filter((asset) => asset.available <= 10);
+    setFilteredAssets(lowStockAssets);
+  }, [allAssets]);
 
   // Handle search filtering
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     const searched = allAssets.filter(
       (asset) =>
-        !inputAssets.includes(asset.hardwareId.toString()) &&
+        asset.available <= 10 && // Ensure only low stock assets are included
         (
           asset.name.toLowerCase().includes(query.toLowerCase()) ||
-          asset.datePurchased.includes(query)
+          asset.hardwareId.toString().includes(query)
         )
     );
     setFilteredAssets(searched);
@@ -79,47 +63,39 @@ const AvailableAssetsForm: React.FC = () => {
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
-      <h3 className={styles.title}>Available Hardware</h3>
+      <h3 className={styles.title}>Warning Low Stock </h3>
 
       {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <TextInput
           className={styles.searchInput}
-          placeholder="Search by name, or date of purchase"
+          placeholder="Search by name or ID"
           value={searchQuery}
           onChange={(e) => handleSearch(e.currentTarget.value)}
         />
       </div>
 
-      {/* 📋 Table of Available Assets */}
+      {/* 📋 Table of Low Stock Assets */}
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
-            <th>Index</th>
-            <th>Hardware Id</th>
+            <th>ID</th>
             <th>Name</th>
-            <th>Date Purchased</th>
             <th>Available</th>
-            <th>Deployed</th>
-            <th>Supplier</th>
           </tr>
         </thead>
         <tbody>
           {paginatedAssets.length > 0 ? (
-            paginatedAssets.map((asset, index) => (
+            paginatedAssets.map((asset) => (
               <tr key={asset.hardwareId}>
-                <td>{index + 1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
-                <td>{asset.datePurchased}</td>
                 <td>{asset.available}</td>
-                <td>{asset.deployed}</td>
-                <td>{asset.supplier}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center" }}>No available hardware found.</td>
+              <td colSpan={3} style={{ textAlign: "center" }}>No low stock assets found.</td>
             </tr>
           )}
         </tbody>
@@ -137,4 +113,4 @@ const AvailableAssetsForm: React.FC = () => {
   );
 };
 
-export default AvailableAssetsForm;
+export default WarningStock;

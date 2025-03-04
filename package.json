@@ -28,7 +28,12 @@
     "express": "^4.19.2",
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
+<<<<<<< HEAD
     "jspdf": "^2.5.1",
+=======
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^5.0.2",
+>>>>>>> a6b0dcc0dadcfa6adde14783370603284fd6a549
     "jwt-decode": "^4.0.0",
     "npm": "^11.1.0",
     "react": "^18.3.1",
