@@ -112,7 +112,7 @@ export function NavbarSegmented() {
       <nav className={classes.navbar}>
         <div className={classes.header}>
           <Text fw={500} size="sm" className={classes.title} c="dimmed" mb="xs">
-            Arellano University
+            Welcome User
           </Text>
         </div>
 

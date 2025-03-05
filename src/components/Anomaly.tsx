@@ -63,6 +63,19 @@ const Anomaly: React.FC = () => {
     }
   });
 
+  // Format timestamp to YYYY-MM-DD HH:MM:SS
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
   const totalPages = Math.ceil(sortedLogs.length / itemsPerPage);
   const paginatedLogs = sortedLogs.slice(
     (currentPage - 1) * itemsPerPage,
@@ -83,17 +96,7 @@ const Anomaly: React.FC = () => {
               <th style={{ padding: "4px" }}>Role</th>
               <th style={{ padding: "4px" }}>Entity</th>
               <th style={{ padding: "4px" }}>Action</th>
-              <th style={{ padding: "4px" }}>
-  IsAnomaly
-  <Button
-    onClick={toggleSortOrder}
-    size="xs"
-    variant="subtle"
-    style={{ marginLeft: "5px", color: "white" }} // Updated here
-  >
-    {sortOrder === "asc" ? "↑" : sortOrder === "desc" ? "↓" : "↕"}
-  </Button>
-</th>
+              <th style={{ padding: "4px" }}>IsAnomaly</th>
               <th style={{ padding: "4px" }}>Timestamp</th>
             </tr>
           </thead>
@@ -108,20 +111,29 @@ const Anomaly: React.FC = () => {
                 <td style={{ padding: "4px" }} className={log.isAnomaly ? styles.anomalyText : ""}>
                   {log.isAnomaly.toString()}
                 </td>
-                <td style={{ padding: "4px" }}>{log.timestamp}</td>
+                <td style={{ padding: "4px" }}>{formatTimestamp(log.timestamp)}</td>
               </tr>
             ))}
           </tbody>
         </Table>
       </div>
 
-      <Pagination
-        total={totalPages}
-        value={currentPage}
-        onChange={setCurrentPage}
-        size="sm"
-        style={{ marginBottom: "10px" }}
-      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <Pagination
+          total={totalPages}
+          value={currentPage}
+          onChange={setCurrentPage}
+          size="sm"
+        />
+        <Button
+          onClick={toggleSortOrder}
+          size="sm"
+          variant="filled" // Changed to "filled" for better visibility
+          style={{ marginLeft: "10px", backgroundColor: "#228be6", color: "white" }} // Added background color and text color
+        >
+          Sort by Anomaly {sortOrder === "asc" ? "↑" : sortOrder === "desc" ? "↓" : "↕"}
+        </Button>
+      </div>
     </div>
   );
 };

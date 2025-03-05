@@ -24,6 +24,7 @@ const SRRFForm: React.FC = () => {
   const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [isSorted, setIsSorted] = useState(false); // State for sorting
 
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
@@ -101,9 +102,12 @@ const SRRFForm: React.FC = () => {
       if (searchName) queryParams.append("Name", searchName);
       if (searchDepartment) queryParams.append("Department", searchDepartment);
       if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
-
+  
       const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
-      setRequests(data);
+      
+      // Sort data by requestId in descending order (newest first) by default
+      const sortedData = data.sort((a, b) => b.requestId - a.requestId);
+      setRequests(sortedData);
     } catch (error) {
       console.error("Error fetching hardware requests:", error);
     }
@@ -125,6 +129,8 @@ const SRRFForm: React.FC = () => {
         await api.put(`/HardwareRequest/${currentEditId}`, formData);
       } else {
         await api.post("/HardwareRequest", formData);
+        // Add the new request to the top of the list
+        setRequests((prevRequests) => [formData as HardwareRequest, ...prevRequests]);
         if (requests.length % itemsPerPage === 0) {
           setCurrentPage((prevPage) => prevPage + 1);
         }
@@ -154,6 +160,20 @@ const SRRFForm: React.FC = () => {
         setRequestToDelete(null);
       }
     }
+  };
+
+  const handleSort = () => {
+    setIsSorted(!isSorted);
+    setRequests((prevRequests) =>
+      [...prevRequests].sort((a, b) => (isSorted ? a.requestId - b.requestId : b.requestId - a.requestId))
+    );
+  };
+
+  const handleClearSearch = () => {
+    setSearchName("");
+    setSearchDepartment("");
+    setSearchWorkstation("");
+    fetchRequests();
   };
 
   const totalPages = Math.ceil(requests.length / itemsPerPage);
@@ -195,6 +215,7 @@ const SRRFForm: React.FC = () => {
           style={{ flex: 1, minWidth: "150px" }}
         />
         <Button className={styles.searchButton} onClick={fetchRequests} style={{ flex: "none" }}>Search</Button>
+        <Button variant="outline" onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
       </div>
 
       <Button className={styles.addButton} onClick={() => setAddModalOpen(true)} style={{ marginBottom: "10px" }}>Add Hardware Request</Button>
@@ -212,7 +233,7 @@ const SRRFForm: React.FC = () => {
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Workstation</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Problem</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Is Fulfilled</th>
-              <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Serial No</th> {/* Moved Serial No column here */}
+              <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Serial No</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Hardware ID</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Actions</th>
             </tr>
@@ -228,7 +249,7 @@ const SRRFForm: React.FC = () => {
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{generateSerialNumber(index)}</td> {/* Moved Serial No here */}
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{generateSerialNumber(index)}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
                   <Button size="xs" onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
@@ -242,8 +263,13 @@ const SRRFForm: React.FC = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
-      <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" style={{ marginBottom: "10px" }} />
+    {/* Pagination and Sort Button */}
+    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "16px", marginBottom: "10px" }}>
+  <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" />
+  <Button onClick={handleSort} size="sm" variant="outline">
+    {isSorted ? "Sort Oldest First" : "Sort Newest First"}
+  </Button>
+</div>
 
       {/* Add/Edit Request Modal */}
       <Modal
