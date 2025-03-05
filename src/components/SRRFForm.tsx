@@ -12,6 +12,7 @@ type HardwareRequest = {
   workstation: string;
   problem: string;
   isFulfilled: boolean;
+  serialNo: string;
 };
 
 const SRRFForm: React.FC = () => {
@@ -34,6 +35,7 @@ const SRRFForm: React.FC = () => {
     workstation: "",
     problem: "",
     isFulfilled: false,
+    serialNo: "",
   });
 
   const [searchName, setSearchName] = useState("");
@@ -78,6 +80,7 @@ const SRRFForm: React.FC = () => {
         problem: "",
         isFulfilled: false,
         name: username || "",
+        SerialNo: "",
       }));
     }
   }, [addModalOpen, username]);
@@ -185,11 +188,6 @@ const SRRFForm: React.FC = () => {
     return date.toLocaleString();
   };
 
-  // Function to generate mock serial numbers
-  const generateSerialNumber = (index: number) => {
-    return `AAA${String(index + 1).padStart(3, "0")}`; // Example: AAA001, AAA002, etc.
-  };
-
   return (
     <div className={styles.wrapper} style={{ maxWidth: "100%", padding: "10px" }}>
       <h2 className={styles.title} style={{ fontSize: "18px", marginBottom: "10px" }}>Hardware Requests</h2>
@@ -233,7 +231,7 @@ const SRRFForm: React.FC = () => {
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Workstation</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Problem</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Is Fulfilled</th>
-              <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Serial No</th>
+              <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Serial Id</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Hardware ID</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Actions</th>
             </tr>
@@ -249,7 +247,7 @@ const SRRFForm: React.FC = () => {
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{generateSerialNumber(index)}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
                   <Button size="xs" onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
@@ -299,6 +297,9 @@ const SRRFForm: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, isFulfilled: e.currentTarget.checked })}
               style={{ marginTop: "10px" }}
             />
+          )}
+          {userRole === "RequestManager" && (
+            <TextInput label="SerialId" value={formData.serialNo} onChange={(e) => setFormData({ ...formData, serialNo: e.target.value })} required />
           )}
           <Button type="submit" style={{ marginTop: "10px" }}>{editModalOpen ? "Update" : "Submit"}</Button>
         </form>
