@@ -1,34 +1,36 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-import { TextInput, Table, Pagination } from "@mantine/core";
+import { TextInput, Table, Pagination, Button } from "@mantine/core"; // Import Button from Mantine
 import { useApi } from "../service/apiService";
 import styles from "./DefectiveAssetsForm.module.css";
 
 type Asset = {
   hardwareId: number;
   name: string;
-  datePurchased: string;
+  datePurchased: string; // Assuming this is a string in ISO format
   defective: number;
   supplier: string;
 };
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 10;
 
 interface DefectiveAssetsFormProps {
-  onSelectAsset: (asset: Asset) => void; 
+  onSelectAsset: (asset: Asset) => void;
 }
 
-const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset }) => {
+// eslint-disable-next-line no-empty-pattern
+const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
   const api = useApi();
   const [activePage, setActivePage] = useState<number>(1);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchName, setSearchName] = useState<string>("");
+  const [searchDate, setSearchDate] = useState<string>("");
+  const [searchSupplier, setSearchSupplier] = useState<string>("");
 
   // Fetch defective assets when component mounts
   useEffect(() => {
     fetchDefectiveAssets();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDefectiveAssets = async () => {
@@ -41,16 +43,37 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
     }
   };
 
-  // Handle search filtering
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+  // Handle search filtering automatically as the user types
+  useEffect(() => {
     const searched = allAssets.filter(
       (asset) =>
-        asset.name.toLowerCase().includes(query.toLowerCase()) ||
-        asset.datePurchased.includes(query)
+        asset.name.toLowerCase().includes(searchName.toLowerCase()) &&
+        asset.datePurchased.includes(searchDate) &&
+        asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase())
     );
     setFilteredAssets(searched);
-    setActivePage(1);
+    setActivePage(1); // Reset to the first page when search criteria change
+  }, [allAssets, searchName, searchDate, searchSupplier]);
+
+  // Format date to "M/D/YYYY, h:mm:ss A"
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Clear search fields
+  const handleClearSearch = () => {
+    setSearchName("");
+    setSearchDate("");
+    setSearchSupplier("");
   };
 
   // Paginate assets
@@ -64,13 +87,26 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
       <h3 className={styles.title}>Defective Hardware</h3>
 
       {/* 🔍 Search Bar */}
-      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
         <TextInput
-          className={styles.searchInput}
-          placeholder="Search by name, or date of purchased"
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.currentTarget.value)}
+          placeholder="Search Name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
         />
+        <TextInput
+          placeholder="mm/dd/yyyy"
+          value={searchDate}
+          onChange={(e) => setSearchDate(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
+        />
+        <TextInput
+          placeholder="Search Supplier"
+          value={searchSupplier}
+          onChange={(e) => setSearchSupplier(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
+        />
+        <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button> {/* Clear button */}
       </div>
 
       {/* 📋 Table of Defective Assets */}
@@ -83,7 +119,6 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
             <th>Date of Purchase</th>
             <th>Defective</th>
             <th>Supplier</th>
-            {/* Removed the "Action" column header */}
           </tr>
         </thead>
         <tbody>
@@ -93,10 +128,9 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ onSelectAsset
                 <td>{index + 1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
-                <td>{asset.datePurchased}</td>
+                <td>{formatDate(asset.datePurchased)}</td> {/* Format the date here */}
                 <td>{asset.defective}</td>
                 <td>{asset.supplier}</td>
-                {/* Removed the "Select" button */}
               </tr>
             ))
           ) : (

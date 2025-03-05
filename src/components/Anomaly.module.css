@@ -1,197 +1,200 @@
 /* General Page Wrapper */
 .wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px;
-    background-color: #f5f7fa;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* Page Title */
-  .title {
-    font-size: 32px;
-    font-weight: bold;
-    text-align: center;
-    color: #34495e;
-    margin-bottom: 25px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  /* Form Container - Styled as a Card */
-  .form {
-    width: 100%;
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-  
-  /* Input Fields */
-  .input {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    transition: 0.3s ease;
-    background-color: #ffffff;
-  }
-  
-  .input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
-  }
-  
-  /* Button Styling */
-  .button {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    padding: 14px 22px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-  }
-  
-  .button:hover {
-    background: linear-gradient(135deg, #0056b3, #003d80);
-    transform: scale(1.05);
-  }
-  
-  .button:active {
-    transform: scale(0.98);
-  }
-  
-  /* Fancy Search Bar */
-  .search {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
-    align-items: center;
-  }
-  
-  .searchInput {
-    flex-grow: 1;
-    padding: 14px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-  }
-  
-  .searchInput:focus {
-    border-color: #007bff;
-    outline: none;
-  }
-  
-  /* Column Layout for Cards */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Page Title */
+.title {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  color: #34495e;
+  margin-bottom: 25px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Form Container - Styled as a Card */
+.form {
+  width: 100%;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* Input Fields */
+.input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: 0.3s ease;
+  background-color: #ffffff;
+}
+
+.input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+}
+
+/* Button Styling */
+.button {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background: linear-gradient(135deg, #0056b3, #003d80);
+  transform: scale(1.05);
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+/* Fancy Search Bar */
+.search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.searchInput {
+  flex-grow: 1;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.searchInput:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Column Layout for Cards */
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Fancy Table Card */
+.tableWrapper {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 16px;
+}
+
+.table th {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table tr:hover {
+  background-color: #eef4ff;
+}
+
+/* Center action buttons */
+.actionButtons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.anomalyText {
+  color: red;
+}
+
+/* Icon Styling */
+.actionIcon {
+  cursor: pointer;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.actionIcon.edit {
+  color: #28a745;
+}
+
+.actionIcon.edit:hover {
+  color: #1e7e34;
+}
+
+.actionIcon.delete {
+  color: #dc3545;
+}
+
+.actionIcon.delete:hover {
+  color: #a71d2a;
+}
+
+/* Add button container */
+.addButton {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
   .container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    width: 100%;
+    grid-template-columns: 1fr 1fr;
   }
-  
-  /* Fancy Table Card */
-  .tableWrapper {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr 1fr 1fr;
   }
-  
-  /* Table Styling */
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  
-  .table th,
-  .table td {
-    padding: 16px;
-    border: 1px solid #ddd;
-    text-align: center;
-    font-size: 16px;
-  }
-  
-  .table th {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  
-  .table tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .table tr:hover {
-    background-color: #eef4ff;
-  }
-  
-  /* Center action buttons */
-  .actionButtons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  /* Icon Styling */
-  .actionIcon {
-    cursor: pointer;
-    font-size: 20px;
-    transition: color 0.3s ease;
-  }
-  
-  .actionIcon.edit {
-    color: #28a745;
-  }
-  
-  .actionIcon.edit:hover {
-    color: #1e7e34;
-  }
-  
-  .actionIcon.delete {
-    color: #dc3545;
-  }
-  
-  .actionIcon.delete:hover {
-    color: #a71d2a;
-  }
-  
-  /* Add button container */
-  .addButton {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  /* Responsive Design */
-  @media (min-width: 768px) {
-    .container {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .container {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-  }
-  
+}

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Table, Pagination, Button, Modal } from "@mantine/core";
 import { useApi } from "../service/apiService";
@@ -103,7 +104,7 @@ const Report: React.FC = () => {
     ]);
 
     // Set initial position for the table
-    let startY = 20; // Start below the title
+    const startY = 20; // Start below the title
     const rowHeight = 8; // Smaller row height
     const colWidths = [15, 20, 30, 30, 30, 50, 15]; // Adjusted column widths to fit within the page
     const tableWidth = colWidths.reduce((a, b) => a + b, 0); // Total table width
