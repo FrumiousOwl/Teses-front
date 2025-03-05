@@ -16,6 +16,19 @@ type Hardware = {
   supplier: string;
 };
 
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+  });
+};
+
 const InputAssetsForm: React.FC = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Hardware[]>([]);
@@ -305,7 +318,7 @@ const InputAssetsForm: React.FC = () => {
               <td style={{ padding: "4px" }}>{hardware.hardwareId}</td>
               <td style={{ padding: "4px" }}>{hardware.name}</td>
               <td style={{ padding: "4px" }}>{hardware.description}</td>
-              <td style={{ padding: "4px" }}>{hardware.datePurchased}</td>
+              <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
               <td style={{ padding: "4px" }}>{hardware.defective}</td>
               <td style={{ padding: "4px" }}>{hardware.available}</td>
               <td style={{ padding: "4px" }}>{hardware.deployed}</td>
