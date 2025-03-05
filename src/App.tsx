@@ -16,7 +16,7 @@ export default function App() {
     <MantineProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<AuthenticationImage />} />
+          <Route path="/srrf" element={<AuthenticationImage />} />
           <Route path="/dashboard" element={<NavbarSegmented />}>
             <Route path="srrf" element={<SRRFForm />} />
             <Route path="input-assets" element={<InputAssetsForm />} />

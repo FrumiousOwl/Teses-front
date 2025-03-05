@@ -21,6 +21,7 @@ const tabs = {
   RequestManager: [
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
     { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+    { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
   ],
   SystemManager: [
     { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
