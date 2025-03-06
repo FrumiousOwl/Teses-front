@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Button, Table, Modal, Select, Pagination, Checkbox } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./SRRFForm.module.css";
+import { useNavigate } from "react-router-dom"; // Add this import
 
 type HardwareRequest = {
   requestId: number;
@@ -45,6 +47,7 @@ const SRRFForm: React.FC = () => {
   const itemsPerPage = 10;
 
   const api = useApi();
+  const navigate = useNavigate(); // Add this hook
 
   // Fetch the username and role from the token
   useEffect(() => {
@@ -65,8 +68,10 @@ const SRRFForm: React.FC = () => {
       } catch (error) {
         console.error("Error decoding token:", error);
       }
+    } else {
+      navigate("/login"); // Redirect to login if no token is found
     }
-  }, []);
+  }, [navigate]);
 
   // Reset form data when the Add Modal is opened
   useEffect(() => {
@@ -80,7 +85,7 @@ const SRRFForm: React.FC = () => {
         problem: "",
         isFulfilled: false,
         name: username || "",
-        SerialNo: "",
+        serialNo: "",
       }));
     }
   }, [addModalOpen, username]);
@@ -92,10 +97,9 @@ const SRRFForm: React.FC = () => {
       fetchRequests();
       fetchHardwareOptions();
     } else {
-      window.location.href = "/login";
+      navigate("/login"); // Redirect to login if no token is found
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchName, searchDepartment, searchWorkstation, currentPage]);
+  }, [searchName, searchDepartment, searchWorkstation, currentPage, navigate]);
 
   const fetchRequests = async () => {
     try {
@@ -105,9 +109,9 @@ const SRRFForm: React.FC = () => {
       if (searchName) queryParams.append("Name", searchName);
       if (searchDepartment) queryParams.append("Department", searchDepartment);
       if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
-  
+
       const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
-      
+
       // Sort data by requestId in descending order (newest first) by default
       const sortedData = data.sort((a, b) => b.requestId - a.requestId);
       setRequests(sortedData);
@@ -261,13 +265,13 @@ const SRRFForm: React.FC = () => {
         </Table>
       </div>
 
-    {/* Pagination and Sort Button */}
-    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "16px", marginBottom: "10px" }}>
-  <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" />
-  <Button onClick={handleSort} size="sm" variant="outline">
-    {isSorted ? "Sort Oldest First" : "Sort Newest First"}
-  </Button>
-</div>
+      {/* Pagination and Sort Button */}
+      <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "16px", marginBottom: "10px" }}>
+        <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" />
+        <Button onClick={handleSort} size="sm" variant="outline">
+          {isSorted ? "Sort Oldest First" : "Sort Newest First"}
+        </Button>
+      </div>
 
       {/* Add/Edit Request Modal */}
       <Modal
