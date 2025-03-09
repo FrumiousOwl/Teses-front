@@ -46,7 +46,6 @@ const SRRFForm: React.FC = () => {
 
   const api = useApi();
 
-  // Fetch the username and role from the token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -68,7 +67,6 @@ const SRRFForm: React.FC = () => {
     }
   }, []);
 
-  // Reset form data when the Add Modal is opened
   useEffect(() => {
     if (addModalOpen) {
       setFormData((prevData) => ({
@@ -85,7 +83,6 @@ const SRRFForm: React.FC = () => {
     }
   }, [addModalOpen, username]);
 
-  // Check authentication and fetch data on component mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -94,27 +91,36 @@ const SRRFForm: React.FC = () => {
     } else {
       window.location.href = "/login";
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchName, searchDepartment, searchWorkstation, currentPage]);
 
   const fetchRequests = async () => {
     try {
-      const queryParams = new URLSearchParams();
-      queryParams.append("Page", currentPage.toString());
-      queryParams.append("Limit", itemsPerPage.toString());
-      if (searchName) queryParams.append("Name", searchName);
-      if (searchDepartment) queryParams.append("Department", searchDepartment);
-      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
+      let apiUrl = "/HardwareRequest";
   
-      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
-      
-      // Sort data by requestId in descending order (newest first) by default
+      if (userRole !== "RequestManager" && username) {
+        apiUrl += `/${username}`;
+      } else {
+
+        const queryParams = new URLSearchParams();
+        queryParams.append("Page", currentPage.toString());
+        queryParams.append("Limit", itemsPerPage.toString());
+  
+        if (searchName) queryParams.append("Name", searchName);
+        if (searchDepartment) queryParams.append("Department", searchDepartment);
+        if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
+  
+        apiUrl += `?${queryParams.toString()}`;
+      }
+  
+      const data = await api.get<HardwareRequest[]>(apiUrl);
+
       const sortedData = data.sort((a, b) => b.requestId - a.requestId);
       setRequests(sortedData);
     } catch (error) {
       console.error("Error fetching hardware requests:", error);
     }
   };
+  
 
   const fetchHardwareOptions = async () => {
     try {
@@ -182,7 +188,6 @@ const SRRFForm: React.FC = () => {
   const totalPages = Math.ceil(requests.length / itemsPerPage);
   const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Function to format date and time
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString);
     return date.toLocaleString();
@@ -193,6 +198,7 @@ const SRRFForm: React.FC = () => {
       <h2 className={styles.title} style={{ fontSize: "18px", marginBottom: "10px" }}>Hardware Requests</h2>
 
       {/* Search Filters */}
+      {userRole === "RequestManager" && (
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
         <TextInput
           placeholder="Search Name"
@@ -214,7 +220,7 @@ const SRRFForm: React.FC = () => {
         />
         <Button className={styles.searchButton} onClick={fetchRequests} style={{ flex: "none" }}>Search</Button>
         <Button variant="outline" onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
-      </div>
+      </div>)}
 
       <Button className={styles.addButton} onClick={() => setAddModalOpen(true)} style={{ marginBottom: "10px" }}>Add Hardware Request</Button>
 

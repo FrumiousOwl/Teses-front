@@ -9,7 +9,7 @@ import classes from './NavbarSegmented.module.css';
 // Define the tabs for each role
 const tabs = {
   User: [
-    { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+    { link: '/dashboard/hardwareRequest', label: 'SRRF', icon: AiFillDatabase },
   ],
   InventoryManager: [
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
@@ -124,7 +124,10 @@ export function NavbarSegmented() {
         <div className={classes.footer}>
           {/* Profile Section */}
           <div className={classes.profileSection}>
-            <Text size="sm" className={classes.username}>
+            <Text size="sm" className={classes.username}
+            style={{ cursor: "pointer", textDecoration: "underline", color: "blue" }} 
+            onClick={() => navigate('/dashboard/change-password')}
+            >
               {username || "Guest"}
             </Text>
           </div>
