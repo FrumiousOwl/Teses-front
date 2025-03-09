@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { TextInput, Button, Table, Modal, Select, Pagination, Checkbox } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./SRRFForm.module.css";
+import { useNavigate } from "react-router-dom";
 
 type HardwareRequest = {
   requestId: number;
@@ -25,7 +26,7 @@ const SRRFForm: React.FC = () => {
   const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [isSorted, setIsSorted] = useState(false); // State for sorting
+  const [isSorted, setIsSorted] = useState(false);
 
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
@@ -45,6 +46,7 @@ const SRRFForm: React.FC = () => {
   const itemsPerPage = 10;
 
   const api = useApi();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -64,22 +66,23 @@ const SRRFForm: React.FC = () => {
       } catch (error) {
         console.error("Error decoding token:", error);
       }
+    } else {
+      navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (addModalOpen) {
-      setFormData((prevData) => ({
-        ...prevData,
+      setFormData({
         hardwareId: null,
         dateNeeded: new Date().toISOString().slice(0, 16),
+        name: username || "",
         department: "",
         workstation: "",
         problem: "",
         isFulfilled: false,
-        name: username || "",
-        SerialNo: "",
-      }));
+        serialNo: "",
+      });
     }
   }, [addModalOpen, username]);
 
@@ -89,31 +92,20 @@ const SRRFForm: React.FC = () => {
       fetchRequests();
       fetchHardwareOptions();
     } else {
-      window.location.href = "/login";
+      navigate("/login");
     }
-  }, [searchName, searchDepartment, searchWorkstation, currentPage]);
+  }, [searchName, searchDepartment, searchWorkstation, currentPage, navigate]);
 
   const fetchRequests = async () => {
     try {
-      let apiUrl = "/HardwareRequest";
-  
-      if (userRole !== "RequestManager" && username) {
-        apiUrl += `/${username}`;
-      } else {
+      const queryParams = new URLSearchParams();
+      queryParams.append("Page", currentPage.toString());
+      queryParams.append("Limit", itemsPerPage.toString());
+      if (searchName) queryParams.append("Name", searchName);
+      if (searchDepartment) queryParams.append("Department", searchDepartment);
+      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
 
-        const queryParams = new URLSearchParams();
-        queryParams.append("Page", currentPage.toString());
-        queryParams.append("Limit", itemsPerPage.toString());
-  
-        if (searchName) queryParams.append("Name", searchName);
-        if (searchDepartment) queryParams.append("Department", searchDepartment);
-        if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
-  
-        apiUrl += `?${queryParams.toString()}`;
-      }
-  
-      const data = await api.get<HardwareRequest[]>(apiUrl);
-
+      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
       const sortedData = data.sort((a, b) => b.requestId - a.requestId);
       setRequests(sortedData);
     } catch (error) {
@@ -133,12 +125,14 @@ const SRRFForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted with data:", formData); // Debugging log
     try {
       if (editModalOpen && currentEditId) {
+        console.log("Updating request with ID:", currentEditId); // Debugging log
         await api.put(`/HardwareRequest/${currentEditId}`, formData);
       } else {
+        console.log("Creating new request"); // Debugging log
         await api.post("/HardwareRequest", formData);
-        // Add the new request to the top of the list
         setRequests((prevRequests) => [formData as HardwareRequest, ...prevRequests]);
         if (requests.length % itemsPerPage === 0) {
           setCurrentPage((prevPage) => prevPage + 1);
@@ -256,7 +250,19 @@ const SRRFForm: React.FC = () => {
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
                 <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
-                  <Button size="xs" onClick={() => { setCurrentEditId(request.requestId); setFormData(request); setEditModalOpen(true); }}>Edit</Button>
+                  <Button
+                    size="xs"
+                    onClick={() => {
+                      console.log("Edit button clicked for request ID:", request.requestId); // Debugging log
+                      setCurrentEditId(request.requestId);
+                      const { requestId, ...rest } = request; // Exclude `requestId`
+                      console.log("Setting formData:", rest); // Debugging log
+                      setFormData(rest); // Set the rest of the fields to `formData`
+                      setEditModalOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
                   {userRole === "RequestManager" && (
                     <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>Delete</Button>
                   )}
@@ -267,18 +273,31 @@ const SRRFForm: React.FC = () => {
         </Table>
       </div>
 
-    {/* Pagination and Sort Button */}
-    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "16px", marginBottom: "10px" }}>
-  <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" />
-  <Button onClick={handleSort} size="sm" variant="outline">
-    {isSorted ? "Sort Oldest First" : "Sort Newest First"}
-  </Button>
-</div>
+      {/* Pagination and Sort Button */}
+      <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "16px", marginBottom: "10px" }}>
+        <Pagination total={totalPages} value={currentPage} onChange={setCurrentPage} size="sm" />
+        <Button onClick={handleSort} size="sm" variant="outline">
+          {isSorted ? "Sort Oldest First" : "Sort Newest First"}
+        </Button>
+      </div>
 
       {/* Add/Edit Request Modal */}
       <Modal
         opened={addModalOpen || editModalOpen}
-        onClose={() => { setAddModalOpen(false); setEditModalOpen(false); }}
+        onClose={() => {
+          setAddModalOpen(false);
+          setEditModalOpen(false);
+          setFormData({
+            hardwareId: null,
+            dateNeeded: new Date().toISOString().slice(0, 16),
+            name: username || "",
+            department: "",
+            workstation: "",
+            problem: "",
+            isFulfilled: false,
+            serialNo: "",
+          });
+        }}
         title={editModalOpen ? "Edit Hardware Request" : "Add Hardware Request"}
         size="sm"
       >

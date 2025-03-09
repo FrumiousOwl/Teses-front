@@ -1,6 +1,6 @@
 import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthenticationImage } from './components/AuthenticationImage';
 import { NavbarSegmented } from './components/NavbarSegmented';
 import SRRFForm from './components/SRRFForm';
@@ -19,7 +19,15 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/" element={<AuthenticationImage />} />
+          {/* Redirect root path to a default route */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Login route */}
+          <Route path="/login" element={<AuthenticationImage />} />
+
+          {/* Dashboard routes */}
           <Route path="/dashboard" element={<NavbarSegmented />}>
+            <Route index element={<Navigate to="srrf" replace />} /> {/* Default nested route */}
             <Route path="srrf" element={<SRRFForm />} />
             <Route path="hardwareRequest" element={<SRRFFormForUser />} />
             <Route path="input-assets" element={<InputAssetsForm />} />
@@ -29,7 +37,12 @@ export default function App() {
             <Route path="warning-stock" element={<WarningStock />} /> 
             <Route path="/dashboard/anomaly" element={<Anomaly />} />
             <Route path = "/dashboard/change-password" element={<ChangePassword />}/>
+            <Route path="warning-stock" element={<WarningStock />} />
+            <Route path="anomaly" element={<Anomaly />} />
           </Route>
+
+          {/* Fallback route for unmatched paths */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </MantineProvider>
