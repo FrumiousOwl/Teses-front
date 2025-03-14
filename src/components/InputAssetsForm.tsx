@@ -19,13 +19,13 @@ type Hardware = {
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
     hour12: true,
   });
 };
@@ -33,10 +33,6 @@ const formatDate = (dateString: string): string => {
 const InputAssetsForm: React.FC = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Hardware[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Hardware[]>([]);
-  const [searchName, setSearchName] = useState("");
-  const [searchDate, setSearchDate] = useState("");
-  const [searchSupplier, setSearchSupplier] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [currentEditAsset, setCurrentEditAsset] = useState<Hardware | null>(null);
@@ -55,18 +51,23 @@ const InputAssetsForm: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [lowStockItems, setLowStockItems] = useState<Hardware[]>([]); // State to track low stock items
-  const [userRole, setUserRole] = useState<string | null>(null); // Add state for user role
+  const [lowStockItems, setLowStockItems] = useState<Hardware[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Search states
+  const [searchName, setSearchName] = useState<string>("");
+  const [searchDate, setSearchDate] = useState<string>("");
+  const [searchSupplier, setSearchSupplier] = useState<string>("");
 
   const api = useApi();
 
   // Fetch the user role from the token
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       try {
-        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
-        const role = decodedToken.role; // Extract the role from the token
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const role = decodedToken.role;
         setUserRole(role);
       } catch (error) {
         console.error("Error decoding token:", error);
@@ -74,54 +75,46 @@ const InputAssetsForm: React.FC = () => {
     }
   }, []);
 
+  // Fetch assets from the API
   const fetchAssets = useCallback(async () => {
     try {
       const data = await api.get<Hardware[]>("/Hardware");
       setAssets(data);
-      setFilteredAssets(data);
-      checkLowStockItems(data); // Check for low stock items whenever assets are fetched
+      checkLowStockItems(data);
     } catch (error) {
       console.error("Error fetching hardware:", error);
     }
   }, [api]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       fetchAssets();
     } else {
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   }, [fetchAssets]);
 
+  // Check for low stock items
   const checkLowStockItems = (assets: Hardware[]) => {
-    const lowStock = assets.filter(asset => asset.available <= 10);
+    const lowStock = assets.filter((asset) => asset.available <= 10);
     setLowStockItems(lowStock);
   };
 
-  const handleSearch = () => {
-    const filtered = assets.filter((asset) => {
-      const matchesName = asset.name.toLowerCase().includes(searchName.toLowerCase());
-      const matchesDate = asset.datePurchased.includes(searchDate);
-      const matchesSupplier = asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase());
-
-      return matchesName && matchesDate && matchesSupplier;
-    });
-    setFilteredAssets(filtered);
-    setCurrentPage(1);
-  };
-
+  // Handle Edit Asset Button Click
   const handleEditClick = (asset: Hardware) => {
     setCurrentEditAsset(asset);
     setFormData(asset);
     setEditModalOpen(true);
   };
 
+  // Handle Delete Asset Button Click
   const handleDeleteClick = (hardwareId: number) => {
     setAssetToDelete(hardwareId);
     setDeleteModalOpen(true);
   };
 
+  // Confirm Delete Asset
   const confirmDelete = async () => {
     if (assetToDelete) {
       try {
@@ -136,7 +129,10 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
+  // Handle Save Edit
   const handleSaveEdit = async () => {
+    if (!currentEditAsset) return;
+
     try {
       const updatedFormData = { ...formData };
 
@@ -158,6 +154,7 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
+  // Handle Add Asset Button Click
   const handleAddClick = () => {
     setFormData({
       hardwareId: 0,
@@ -173,6 +170,7 @@ const InputAssetsForm: React.FC = () => {
     setAddModalOpen(true);
   };
 
+  // Handle Save Add
   const handleSaveAdd = async () => {
     try {
       if (formData.deployed > formData.available) {
@@ -198,6 +196,7 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
+  // Handle Increment
   const handleIncrement = (field: keyof Hardware) => {
     setFormData((prev) => {
       const newValue = (prev[field] as number) + 1;
@@ -216,6 +215,7 @@ const InputAssetsForm: React.FC = () => {
     });
   };
 
+  // Handle Decrement
   const handleDecrement = (field: keyof Hardware) => {
     setFormData((prev) => ({
       ...prev,
@@ -223,11 +223,27 @@ const InputAssetsForm: React.FC = () => {
     }));
   };
 
+  // Filter assets based on search criteria
+  const filteredAssets = assets.filter((asset) => {
+    const matchesName = asset.name.toLowerCase().includes(searchName.toLowerCase());
+    const matchesDate = asset.datePurchased.includes(searchDate);
+    const matchesSupplier = asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase());
+    return matchesName && matchesDate && matchesSupplier;
+  });
+
+  // Paginate assets
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
   const paginatedAssets = filteredAssets.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Clear search fields
+  const handleClearSearch = () => {
+    setSearchName("");
+    setSearchDate("");
+    setSearchSupplier("");
+  };
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "100%", padding: "10px", position: "relative" }}>
@@ -261,32 +277,6 @@ const InputAssetsForm: React.FC = () => {
         </Tooltip>
       )}
 
-      {/* Search Bar */}
-      <div className={styles.searchContainer} style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "10px" }}>
-        <TextInput
-          placeholder="Search Name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Date Purchased"
-          type="date"
-          value={searchDate}
-          onChange={(e) => setSearchDate(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Supplier"
-          value={searchSupplier}
-          onChange={(e) => setSearchSupplier(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <Button className={styles.searchButton} onClick={handleSearch} style={{ flex: "none" }}>
-          Search
-        </Button>
-      </div>
-
       {/* Add Asset Button (Conditional Rendering) */}
       {userRole === "InventoryManager" && (
         <Button className={styles.addButton} onClick={handleAddClick} style={{ marginBottom: "10px" }}>
@@ -294,56 +284,71 @@ const InputAssetsForm: React.FC = () => {
         </Button>
       )}
 
+      {/* Search Bar */}
+      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+        <TextInput
+          placeholder="Search by name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
+        />
+        <TextInput
+          placeholder="Search by date (YYYY-MM-DD)"
+          value={searchDate}
+          onChange={(e) => setSearchDate(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
+        />
+        <TextInput
+          placeholder="Search by supplier"
+          value={searchSupplier}
+          onChange={(e) => setSearchSupplier(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: "150px" }}
+        />
+        <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
+      </div>
+
       {/* Table of Assets */}
-      <div style={{ overflowX: "auto", marginBottom: "20px" }}></div>
-      <Table className={styles.table} style={{ fontSize: "12px", marginBottom: "10px", minWidth: "1100px"  }}>
-        <thead>
-          <tr>
-            <th style={{ padding: "4px" }}>Index</th>
-            <th style={{ padding: "4px" }}>ID</th>
-            <th style={{ padding: "4px" }}>Name</th>
-            <th style={{ padding: "4px" }}>Description</th>
-            <th style={{ padding: "4px" }}>Date Purchased</th>
-            <th style={{ padding: "4px" }}>Supplier</th>
-            <th style={{padding: "4px"}}>Total Price</th>
-            <th style={{ padding: "4px" }}>Defective</th>
-            <th style={{ padding: "4px" }}>Available</th>
-            <th style={{ padding: "4px" }}>Deployed</th>
-            <th style={{ padding: "4px" }}>Total Items</th>
-            {/* Conditionally render the Actions column header */}
-            {userRole === "InventoryManager" && (
-              <th style={{ padding: "4px" }}>Actions</th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedAssets.map((hardware, index) => (
-            <tr key={hardware.hardwareId}>
-              <td style={{ padding: "4px" }}>{index + 1}</td>
-              <td style={{ padding: "4px" }}>{hardware.hardwareId}</td>
-              <td style={{ padding: "4px" }}>{hardware.name}</td>
-              <td style={{ padding: "4px" }}>{hardware.description}</td>
-              <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
-              <td style={{ padding: "4px" }}>{hardware.supplier}</td>
-              <td style={{ padding: "4px" }}>₱ {hardware.totalPrice.toLocaleString()}</td>
-              <td style={{ padding: "4px" }}>{hardware.defective}</td>
-              <td style={{ padding: "4px" }}>{hardware.available}</td>
-              <td style={{ padding: "4px" }}>{hardware.deployed}</td>
-              {/* Conditionally render the Actions column cells */}
-              {userRole === "InventoryManager" && (
-                <td style={{ padding: "4px" }} className={styles.actionButtons}>
-                  <Button size="xs" onClick={() => handleEditClick(hardware)}>
-                    Edit
-                  </Button>
-                  <Button size="xs" color="red" onClick={() => handleDeleteClick(hardware.hardwareId)}>
-                    Delete
-                  </Button>
-                </td>
-              )}
+      <div style={{ overflowX: "auto", marginBottom: "20px" }}>
+        <Table className={styles.table} style={{ fontSize: "12px", marginBottom: "10px", minWidth: "1100px" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "4px" }}>Index</th>
+              <th style={{ padding: "4px" }}>ID</th>
+              <th style={{ padding: "4px" }}>Name</th>
+              <th style={{ padding: "4px" }}>Description</th>
+              <th style={{ padding: "4px" }}>Date Purchased</th>
+              <th style={{ padding: "4px" }}>Defective</th>
+              <th style={{ padding: "4px" }}>Available</th>
+              <th style={{ padding: "4px" }}>Deployed</th>
+              <th style={{ padding: "4px" }}>Supplier</th>
+              <th style={{ padding: "4px" }}>Total Price</th>
+              {userRole === "InventoryManager" && <th style={{ padding: "4px" }}>Actions</th>}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {paginatedAssets.map((hardware, index) => (
+              <tr key={hardware.hardwareId}>
+                <td style={{ padding: "4px" }}>{index + 1}</td>
+                <td style={{ padding: "4px" }}>{hardware.hardwareId}</td>
+                <td style={{ padding: "4px" }}>{hardware.name}</td>
+                <td style={{ padding: "4px" }}>{hardware.description}</td>
+                <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
+                <td style={{ padding: "4px" }}>{hardware.defective}</td>
+                <td style={{ padding: "4px" }}>{hardware.available}</td>
+                <td style={{ padding: "4px" }}>{hardware.deployed}</td>
+                <td style={{ padding: "4px" }}>{hardware.supplier}</td>
+                <td style={{ padding: "4px" }}>₱ {Number(hardware.totalPrice).toLocaleString("en-PH")} </td>
+                {userRole === "InventoryManager" && (
+                  <td style={{ padding: "4px" }} className={styles.actionButtons}>
+                    <Button size="xs" onClick={() => handleEditClick(hardware)}>Edit</Button>
+                    <Button size="xs" color="red" onClick={() => handleDeleteClick(hardware.hardwareId)}>Delete</Button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
 
       {/* Pagination */}
       <Pagination

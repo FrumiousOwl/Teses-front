@@ -98,6 +98,7 @@ const SRRFForm: React.FC = () => {
     } else {
       navigate("/login");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchName, searchDepartment, searchWorkstation, currentPage, navigate]);
 
   const fetchRequests = async () => {
@@ -116,7 +117,6 @@ const SRRFForm: React.FC = () => {
       console.error("Error fetching hardware requests:", error);
     }
   };
-  
 
   const fetchHardwareOptions = async () => {
     try {
@@ -130,6 +130,8 @@ const SRRFForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with data:", formData); 
+    console.log("Form submitted with data:", formData); // Debugging log
+    console.log("User Role:", userRole); // Log user role
     try {
       if (editModalOpen && currentEditId) {
         console.log("Updating request with ID:", currentEditId); 
@@ -196,7 +198,6 @@ const SRRFForm: React.FC = () => {
       <h2 className={styles.title} style={{ fontSize: "18px", marginBottom: "10px" }}>Hardware Requests</h2>
 
       {/* Search Filters */}
-      {userRole === "RequestManager" && (
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
         <TextInput
           placeholder="Search Name"
@@ -218,7 +219,7 @@ const SRRFForm: React.FC = () => {
         />
         <Button className={styles.searchButton} onClick={fetchRequests} style={{ flex: "none" }}>Search</Button>
         <Button variant="outline" onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
-      </div>)}
+      </div>
 
       <Button className={styles.addButton} onClick={() => setAddModalOpen(true)} style={{ marginBottom: "10px" }}>Add Hardware Request</Button>
 

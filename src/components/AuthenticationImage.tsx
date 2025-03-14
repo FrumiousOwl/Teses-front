@@ -14,7 +14,7 @@ import classes from "./AuthenticationImage.module.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:7234";
 
 export function AuthenticationImage() {
-  const [username, setUsername] = useState(""); // ✅ Use 'username' instead of 'email'
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export function AuthenticationImage() {
 
       const response = await axios.post(
         `${API_BASE_URL}/api/account/login`,
-        { username, password }, // ✅ Corrected key
+        { username, password },
         { withCredentials: true }
       );
 
@@ -38,7 +38,17 @@ export function AuthenticationImage() {
         const token = response.data.token;
         console.log("✅ Login successful! Token received.");
         localStorage.setItem("token", token);
-        navigate("/dashboard");
+
+        // Decode the token to get the user role
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const userRole = decodedToken.role;
+
+        // Redirect based on the user role
+        if (userRole === "User") {
+          navigate("/dashboard/hardwareRequest");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (err: any) {
       console.error("❌ Login failed:", err.response?.data || err.message);
@@ -57,7 +67,7 @@ export function AuthenticationImage() {
 
         <form onSubmit={handleLogin}>
           <TextInput
-            label="Username" // ✅ Updated label
+            label="Username"
             placeholder="Enter your username"
             size="md"
             value={username}

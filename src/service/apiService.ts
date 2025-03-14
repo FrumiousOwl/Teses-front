@@ -21,7 +21,15 @@ class CustomAxiosWrapper {
     data: RequestType
   ): Promise<ResponseType> {
     try {
+      // Log the request URL and payload for debugging
+      console.log('Making POST request to:', url);
+      console.log('Request Payload:', data);
+
       const response = await this.axiosInstance.post(url, data);
+
+      // Log the response for debugging
+      console.log('Response:', response);
+
       return response.data as ResponseType;
     } catch (error) {
       throw this.handleError(error);
@@ -51,6 +59,9 @@ class CustomAxiosWrapper {
 
   private handleError(error: unknown): Error {
     if (axios.isAxiosError(error)) {
+      // Log the detailed error response from the server
+      console.error('Axios Error:', error.response?.data);
+
       if (error.response?.status === 403) {
         return new Error("You do not have permission to perform this action.");
       }

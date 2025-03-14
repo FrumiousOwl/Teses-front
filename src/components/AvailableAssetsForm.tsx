@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextInput, Table, Pagination, Button } from "@mantine/core"; // Import Button from Mantine
+import { TextInput, Table, Pagination, Button } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./AvailableAssetsForm.module.css";
 
@@ -36,6 +36,7 @@ const AvailableAssetsForm: React.FC = () => {
     try {
       const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
+      setFilteredAssets(data); // Reset filteredAssets to show all assets
     } catch (error) {
       console.error("Error fetching available hardware:", error);
     }
@@ -58,18 +59,18 @@ const AvailableAssetsForm: React.FC = () => {
     setFilteredAssets(filtered);
   }, [allAssets, inputAssets]);
 
-  // Handle search filtering automatically as the user types
-  useEffect(() => {
+  // Handle search when the search button is clicked
+  const handleSearch = () => {
     const searched = allAssets.filter(
       (asset) =>
-        !inputAssets.includes(asset.hardwareId.toString()) &&
-        (asset.name.toLowerCase().includes(searchName.toLowerCase()) ||
-         asset.datePurchased.includes(searchDate) ||
-         asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase()))
+        !inputAssets.includes(asset.hardwareId.toString()) && // Exclude input assets
+        (asset.name.toLowerCase().includes(searchName.toLowerCase())) && // Search by name
+        (asset.datePurchased.includes(searchDate)) && // Search by date
+        (asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase())) // Search by supplier
     );
     setFilteredAssets(searched);
     setActivePage(1); // Reset to the first page when search criteria change
-  }, [allAssets, inputAssets, searchName, searchDate, searchSupplier]);
+  };
 
   // Format date to "M/D/YYYY, h:mm:ss A"
   const formatDate = (dateString: string) => {
@@ -85,11 +86,12 @@ const AvailableAssetsForm: React.FC = () => {
     });
   };
 
-  // Clear search fields
+  // Clear search fields and reset the table to show all assets
   const handleClearSearch = () => {
     setSearchName("");
     setSearchDate("");
     setSearchSupplier("");
+    fetchAssets(); // Reset the table to show all assets
   };
 
   // Paginate assets
@@ -122,6 +124,7 @@ const AvailableAssetsForm: React.FC = () => {
           onChange={(e) => setSearchSupplier(e.currentTarget.value)}
           style={{ flex: 1, minWidth: "150px" }}
         />
+        <Button onClick={handleSearch} style={{ flex: "none" }}>Search</Button> {/* Search button */}
         <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button> {/* Clear button */}
       </div>
 

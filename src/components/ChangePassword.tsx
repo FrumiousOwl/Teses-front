@@ -1,81 +1,141 @@
-import React from 'react';
-import { useForm } from '@mantine/form';
-import { PasswordInput, Button, Box, Group } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import axios from 'axios';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from "react";
+import { Box, Button, PasswordInput, Group, Modal, Text } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { useApi } from "../service/apiService";
+import styles from "./ChangePassword.module.css"; // ✅ Import CSS module
 
-const api = useApi();
-
-const ChangePassword = () => {
+export default function ChangePassword() {
+  const api = useApi();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const form = useForm({
     initialValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
     validate: {
-      currentPassword: (value) => (value.length < 6 ? 'Current password must be at least 6 characters' : null),
-      newPassword: (value) => (value.length < 6 ? 'New password must be at least 6 characters' : null),
-      confirmNewPassword: (value, values) =>
-        value !== values.newPassword ? 'Passwords do not match' : null,
+      currentPassword: (value) =>
+        value.length < 6 ? "Current password must be at least 6 characters" : null,
+      newPassword: (value) =>
+        value.length < 6 ? "New password must be at least 6 characters" : null,
+      confirmPassword: (value, values) =>
+        value !== values.newPassword ? "Passwords do not match" : null,
     },
   });
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
-      const response = await api.post('/account/change-password', {
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      }) as { status: number };;
+      setIsLoading(true);
+      console.log("Submitting form with values:", values);
 
-      if (response.status === 200) {
+      const response = await api.post<{ currentPassword: string; newPassword: string }, any>(
+        "/account/change-password",
+        {
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        }
+      );
+
+      console.log("API Response:", response);
+
+      if (response && typeof response === "string" && response.includes("Password changed successfully")) {
+        console.log("Password change successful");
+
         notifications.show({
-          title: 'Success',
-          message: 'Password changed successfully!',
-          color: 'green',
+          title: "Success",
+          message: "Your password has been successfully changed!",
+          color: "green",
         });
+
         form.reset();
+      } else {
+        throw new Error("Unexpected API response: " + JSON.stringify(response));
       }
     } catch (error) {
-        notifications.show({
-        title: 'Error',
-        message: 'Failed to change password. Please try again.',
-        color: 'red',
+      console.error("Error changing password:", error);
+
+      notifications.show({
+        title: "Error",
+        message: error instanceof Error ? error.message : "Failed to change password. Please try again.",
+        color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const openConfirmationModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const confirmPasswordChange = () => {
+    setIsModalOpen(false);
+    form.onSubmit(handleSubmit)();
+  };
+
   return (
-    <Box style={{ maxWidth: 400, margin: 'auto' }}>
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+    <Box className={styles.container}>
+      <h2 className={styles.title}>Change Password</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          openConfirmationModal();
+        }}
+      >
         <PasswordInput
           label="Current Password"
-          placeholder="Enter your current password"
-          {...form.getInputProps('currentPassword')}
+          placeholder="Enter current password"
+          {...form.getInputProps("currentPassword")}
           required
+          className={styles.input}
         />
+
         <PasswordInput
           label="New Password"
-          placeholder="Enter your new password"
-          {...form.getInputProps('newPassword')}
+          placeholder="Enter new password"
+          {...form.getInputProps("newPassword")}
           required
           mt="md"
+          className={styles.input}
         />
+
         <PasswordInput
-          label="Confirm New Password"
-          placeholder="Confirm your new password"
-          {...form.getInputProps('confirmNewPassword')}
+          label="Confirm Password"
+          placeholder="Confirm new password"
+          {...form.getInputProps("confirmPassword")}
           required
           mt="md"
+          className={styles.input}
         />
+
         <Group justify="flex-end" mt="md">
-          <Button type="submit">Change Password</Button>
+          <Button type="submit" loading={isLoading} className={styles.submitButton}>
+            {isLoading ? "Changing..." : "Change Password"}
+          </Button>
         </Group>
       </form>
+
+      {/* ✅ Confirmation Modal */}
+      <Modal opened={isModalOpen} onClose={closeModal} title="Confirm Password Change" centered>
+        <Text className={styles.modalText}>Are you sure you want to change your password?</Text>
+
+        <Group justify="flex-end" mt="md">
+          <Button onClick={closeModal} variant="default" className={styles.cancelButton}>
+            Cancel
+          </Button>
+          <Button onClick={confirmPasswordChange} color="green" className={styles.confirmButton}>
+            Yes, Proceed
+          </Button>
+        </Group>
+      </Modal>
     </Box>
   );
-};
-
-export default ChangePassword;
+}

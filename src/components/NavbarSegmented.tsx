@@ -24,8 +24,8 @@ const tabs = {
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
   ],
   SystemManager: [
-    { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+    { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
