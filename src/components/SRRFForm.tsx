@@ -14,7 +14,9 @@ type HardwareRequest = {
   problem: string;
   isFulfilled: boolean;
   serialNo: string;
+  status: number;
 };
+
 
 const SRRFForm: React.FC = () => {
   const [requests, setRequests] = useState<HardwareRequest[]>([]);
@@ -37,6 +39,7 @@ const SRRFForm: React.FC = () => {
     problem: "",
     isFulfilled: false,
     serialNo: "",
+    status: 0,
   });
 
   const [searchName, setSearchName] = useState("");
@@ -82,6 +85,7 @@ const SRRFForm: React.FC = () => {
         problem: "",
         isFulfilled: false,
         serialNo: "",
+        status: 0,
       });
     }
   }, [addModalOpen, username]);
@@ -125,13 +129,13 @@ const SRRFForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", formData); // Debugging log
+    console.log("Form submitted with data:", formData); 
     try {
       if (editModalOpen && currentEditId) {
-        console.log("Updating request with ID:", currentEditId); // Debugging log
+        console.log("Updating request with ID:", currentEditId); 
         await api.put(`/HardwareRequest/${currentEditId}`, formData);
       } else {
-        console.log("Creating new request"); // Debugging log
+        console.log("Creating new request"); 
         await api.post("/HardwareRequest", formData);
         setRequests((prevRequests) => [formData as HardwareRequest, ...prevRequests]);
         if (requests.length % itemsPerPage === 0) {
@@ -233,41 +237,64 @@ const SRRFForm: React.FC = () => {
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Is Fulfilled</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Serial Id</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Hardware ID</th>
+              <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Status</th>
               <th style={{ padding: "6px", whiteSpace: "nowrap" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedRequests.map((request, index) => (
               <tr key={request.requestId}>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{index + 1}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.requestId}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{formatDateTime(request.dateNeeded)}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.name}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.department}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
-                <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
-                  <Button
-                    size="xs"
-                    onClick={() => {
-                      console.log("Edit button clicked for request ID:", request.requestId); // Debugging log
-                      setCurrentEditId(request.requestId);
-                      const { requestId, ...rest } = request; // Exclude `requestId`
-                      console.log("Setting formData:", rest); // Debugging log
-                      setFormData(rest); // Set the rest of the fields to `formData`
-                      setEditModalOpen(true);
-                    }}
-                  >
-                    Edit
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{index + 1}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.requestId}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{formatDateTime(request.dateNeeded)}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.name}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.department}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontWeight: "bold",
+                    backgroundColor:
+                      request.status === 0
+                        ? "yellow" // Pending
+                        : request.status === 1
+                        ? "green" // Approved
+                        : "red", // Rejected
+                    color: "black", // Text color
+                  }}
+                >
+                  {request.status === 0
+                    ? "Pending"
+                    : request.status === 1
+                    ? "Approved"
+                    : "Rejected"}
+                </span>
+              </td>
+              <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    setCurrentEditId(request.requestId);
+                    const { requestId, ...rest } = request;
+                    setFormData(rest);
+                    setEditModalOpen(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                {userRole === "RequestManager" && (
+                  <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>
+                    Delete
                   </Button>
-                  {userRole === "RequestManager" && (
-                    <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>Delete</Button>
-                  )}
-                </td>
-              </tr>
+                )}
+              </td>
+            </tr>
             ))}
           </tbody>
         </Table>
@@ -296,6 +323,7 @@ const SRRFForm: React.FC = () => {
             problem: "",
             isFulfilled: false,
             serialNo: "",
+            status: 0,
           });
         }}
         title={editModalOpen ? "Edit Hardware Request" : "Add Hardware Request"}
@@ -326,6 +354,17 @@ const SRRFForm: React.FC = () => {
           {userRole === "RequestManager" && (
             <TextInput label="SerialId" value={formData.serialNo} onChange={(e) => setFormData({ ...formData, serialNo: e.target.value })} required />
           )}
+          {userRole === "RequestManager" && (
+          <Select label="Status" value={formData.status.toString()} onChange={(value) => {
+            const statusValue = value ? parseInt(value) : 0;
+            setFormData({ ...formData, status: statusValue }); }}
+          data={[
+            { value: "0", label: "Pending" },
+            { value: "1", label: "Approved" },
+            { value: "2", label: "Rejected" },
+          ]}
+          required
+        /> )}
           <Button type="submit" style={{ marginTop: "10px" }}>{editModalOpen ? "Update" : "Submit"}</Button>
         </form>
       </Modal>

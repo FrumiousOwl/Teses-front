@@ -14,6 +14,7 @@ type Hardware = {
   available: number;
   deployed: number;
   supplier: string;
+  totalPrice: string;
 };
 
 const formatDate = (dateString: string): string => {
@@ -50,6 +51,7 @@ const InputAssetsForm: React.FC = () => {
     available: 0,
     deployed: 0,
     supplier: "",
+    totalPrice: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -166,6 +168,7 @@ const InputAssetsForm: React.FC = () => {
       available: 0,
       deployed: 0,
       supplier: "",
+      totalPrice: "",
     });
     setAddModalOpen(true);
   };
@@ -301,10 +304,12 @@ const InputAssetsForm: React.FC = () => {
             <th style={{ padding: "4px" }}>Name</th>
             <th style={{ padding: "4px" }}>Description</th>
             <th style={{ padding: "4px" }}>Date Purchased</th>
+            <th style={{ padding: "4px" }}>Supplier</th>
+            <th style={{padding: "4px"}}>Total Price</th>
             <th style={{ padding: "4px" }}>Defective</th>
             <th style={{ padding: "4px" }}>Available</th>
             <th style={{ padding: "4px" }}>Deployed</th>
-            <th style={{ padding: "4px" }}>Supplier</th>
+            <th style={{ padding: "4px" }}>Total Items</th>
             {/* Conditionally render the Actions column header */}
             {userRole === "InventoryManager" && (
               <th style={{ padding: "4px" }}>Actions</th>
@@ -319,10 +324,11 @@ const InputAssetsForm: React.FC = () => {
               <td style={{ padding: "4px" }}>{hardware.name}</td>
               <td style={{ padding: "4px" }}>{hardware.description}</td>
               <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
+              <td style={{ padding: "4px" }}>{hardware.supplier}</td>
+              <td style={{ padding: "4px" }}>₱ {hardware.totalPrice.toLocaleString()}</td>
               <td style={{ padding: "4px" }}>{hardware.defective}</td>
               <td style={{ padding: "4px" }}>{hardware.available}</td>
               <td style={{ padding: "4px" }}>{hardware.deployed}</td>
-              <td style={{ padding: "4px" }}>{hardware.supplier}</td>
               {/* Conditionally render the Actions column cells */}
               {userRole === "InventoryManager" && (
                 <td style={{ padding: "4px" }} className={styles.actionButtons}>
@@ -361,6 +367,8 @@ const InputAssetsForm: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })}
               required
             />
+            <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
+            <TextInput label="Total Price" value={formData.totalPrice} onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })} required />
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <TextInput
                 label="Defective"
@@ -403,7 +411,6 @@ const InputAssetsForm: React.FC = () => {
               <Button onClick={() => handleDecrement("deployed")} style={{ marginTop: "24px" }}>-</Button>
               <Button onClick={() => handleIncrement("deployed")} style={{ marginTop: "24px" }}>+</Button>
             </div>
-            <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
             <Button onClick={handleSaveEdit}>Save</Button>
           </div>
         </Modal>
@@ -422,6 +429,8 @@ const InputAssetsForm: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, datePurchased: e.target.value })}
               required
             />
+            <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
+            <TextInput label="Total Price" value={formData.totalPrice} onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })} required />
             <TextInput
               label="Defective"
               type="number"
@@ -449,7 +458,6 @@ const InputAssetsForm: React.FC = () => {
                 setFormData({ ...formData, deployed });
               }}
             />
-            <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
             <Button onClick={handleSaveAdd}>Save</Button>
           </div>
         </Modal>
