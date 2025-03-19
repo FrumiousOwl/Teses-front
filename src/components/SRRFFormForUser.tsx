@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-empty-pattern */
 import React, { useState, useEffect } from "react";
 import { TextInput, Button, Table, Modal, Select, Pagination, Checkbox } from "@mantine/core";
 import { useApi } from "../service/apiService";
@@ -21,12 +23,12 @@ const SRRFFormForUser: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentEditId, setCurrentEditId] = useState<number | null>(null);
   const [hardwareOptions, setHardwareOptions] = useState<{ value: string; label: string }[]>([]);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
+  const [, setDeleteModalOpen] = useState(false);
+  const [, setRequestToDelete] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [isSorted, setIsSorted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [] = useState(true);
 
   const [formData, setFormData] = useState<Omit<HardwareRequest, "requestId">>({
     hardwareId: null,
@@ -147,19 +149,6 @@ const SRRFFormForUser: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (requestToDelete) {
-      try {
-        await api.delete(`/HardwareRequest/${requestToDelete}`);
-        fetchRequests();
-      } catch (error) {
-        console.error("Error deleting hardware request:", error);
-      } finally {
-        setDeleteModalOpen(false);
-        setRequestToDelete(null);
-      }
-    }
-  };
 
   const handleSort = () => {
     setIsSorted(!isSorted);

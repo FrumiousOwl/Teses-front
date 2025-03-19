@@ -12,6 +12,7 @@ import WarningStock from './components/WarningStock';
 import Anomaly from './components/Anomaly';
 import SRRFFormForUser from './components/SRRFFormForUser';
 import ChangePassword from './components/ChangePassword';
+import Register from './components/Register';
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path = "/dashboard/change-password" element={<ChangePassword />}/>
             <Route path="warning-stock" element={<WarningStock />} />
             <Route path="anomaly" element={<Anomaly />} />
+            <Route path="register" element={<Register />} />
           </Route>
 
           {/* Fallback route for unmatched paths */}

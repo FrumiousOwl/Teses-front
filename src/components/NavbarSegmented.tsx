@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Text, Tooltip } from '@mantine/core';
-import { IconLogout, IconAlertTriangle, IconAlertOctagon } from '@tabler/icons-react';
+import { Text, Tooltip, Loader } from '@mantine/core';
+import { IconLogout, IconAlertTriangle, IconAlertOctagon, IconUserPlus } from '@tabler/icons-react'; // Added IconUserPlus for the Register tab
 import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillPlusCircle, AiFillContainer } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
@@ -26,6 +26,7 @@ const tabs = {
   SystemManager: [
     { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
+    { link: '/dashboard/register', label: 'Register', icon: IconUserPlus }, // Added Register tab
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
@@ -37,9 +38,10 @@ const tabs = {
 export function NavbarSegmented() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [, setActive] = useState(location.pathname);
+  const [active, setActive] = useState(location.pathname);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Fetch the user's role and username from the token
   useEffect(() => {
@@ -67,6 +69,8 @@ export function NavbarSegmented() {
       } catch (error) {
         console.error("Error decoding token:", error);
         navigate('/login'); // Redirect to login if token is invalid
+      } finally {
+        setLoading(false);
       }
     } else {
       navigate('/login'); // Redirect to login if no token is found
@@ -98,7 +102,7 @@ export function NavbarSegmented() {
   const links = getTabsForRole().map((item) => (
     <Tooltip label={item.label} position="right" withArrow key={item.label}>
       <Link
-        className={`${classes.link} ${location.pathname === item.link ? classes.active : ''}`}
+        className={`${classes.link} ${active === item.link ? classes.active : ''}`}
         to={item.link}
         onClick={() => setActive(item.link)}
       >
@@ -107,6 +111,14 @@ export function NavbarSegmented() {
       </Link>
     </Tooltip>
   ));
+
+  if (loading) {
+    return (
+      <div className={classes.loadingContainer}>
+        <Loader size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className={classes.container}>
@@ -124,9 +136,11 @@ export function NavbarSegmented() {
         <div className={classes.footer}>
           {/* Profile Section */}
           <div className={classes.profileSection}>
-            <Text size="sm" className={classes.username}
-            style={{ cursor: "pointer", textDecoration: "underline", color: "blue" }} 
-            onClick={() => navigate('/dashboard/change-password')}
+            <Text
+              size="sm"
+              className={classes.username}
+              style={{ cursor: "pointer", textDecoration: "underline", color: "blue" }}
+              onClick={() => navigate('/dashboard/change-password')}
             >
               {username || "Guest"}
             </Text>

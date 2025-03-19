@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { TextInput, Table, Pagination, Button } from "@mantine/core"; // Import Button from Mantine
+import { TextInput, Table, Pagination, Button } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./DefectiveAssetsForm.module.css";
 
 type Asset = {
   hardwareId: number;
   name: string;
-  datePurchased: string; // Assuming this is a string in ISO format
+  datePurchased: string;
   defective: number;
   supplier: string;
 };
 
 const ITEMS_PER_PAGE = 10;
 
-interface DefectiveAssetsFormProps {
-  onSelectAsset: (asset: Asset) => void;
-}
-
-// eslint-disable-next-line no-empty-pattern
-const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
+const DefectiveAssetsForm: React.FC = () => {
   const api = useApi();
   const [activePage, setActivePage] = useState<number>(1);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
@@ -26,11 +21,12 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
   const [searchName, setSearchName] = useState<string>("");
   const [searchDate, setSearchDate] = useState<string>("");
   const [searchSupplier, setSearchSupplier] = useState<string>("");
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Fetch defective assets when component mounts
   useEffect(() => {
     fetchDefectiveAssets();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchUserRole();
   }, []);
 
   const fetchDefectiveAssets = async () => {
@@ -40,6 +36,20 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
       setFilteredAssets(data);
     } catch (error) {
       console.error("Error fetching defective hardware:", error);
+    }
+  };
+
+  // Fetch user role from token
+  const fetchUserRole = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const role = decodedToken.role;
+        setUserRole(role);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
     }
   };
 
@@ -95,9 +105,10 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
           style={{ flex: 1, minWidth: "150px" }}
         />
         <TextInput
-          placeholder="mm/dd/yyyy"
+          type="date"
+          placeholder="Search by date"
           value={searchDate}
-          onChange={(e) => setSearchDate(e.currentTarget.value)}
+          onChange={(e) => setSearchDate(e.target.value)}
           style={{ flex: 1, minWidth: "150px" }}
         />
         <TextInput
@@ -106,7 +117,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
           onChange={(e) => setSearchSupplier(e.currentTarget.value)}
           style={{ flex: 1, minWidth: "150px" }}
         />
-        <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button> {/* Clear button */}
+        <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
       </div>
 
       {/* 📋 Table of Defective Assets */}
@@ -116,7 +127,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
             <th>Index</th>
             <th>ID</th>
             <th>Name</th>
-            <th>Date of Purchase</th>
+            <th>Date Purchased</th>
             <th>Defective</th>
             <th>Supplier</th>
           </tr>
@@ -128,9 +139,9 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
                 <td>{index + 1}</td>
                 <td>{asset.hardwareId}</td>
                 <td>{asset.name}</td>
-                <td>{formatDate(asset.datePurchased)}</td> {/* Format the date here */}
+                <td>{formatDate(asset.datePurchased)}</td>
                 <td>{asset.defective}</td>
-                <td>{asset.supplier}</td>
+                <td>{userRole === "InventoryManager" ? asset.supplier : "NaN"}</td>
               </tr>
             ))
           ) : (

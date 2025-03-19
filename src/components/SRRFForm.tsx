@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from "react";
 import { TextInput, Button, Table, Modal, Select, Pagination, Checkbox } from "@mantine/core";
 import { useApi } from "../service/apiService";
 import styles from "./SRRFForm.module.css";
@@ -16,7 +17,6 @@ type HardwareRequest = {
   serialNo: string;
   status: number;
 };
-
 
 const SRRFForm: React.FC = () => {
   const [requests, setRequests] = useState<HardwareRequest[]>([]);
@@ -51,6 +51,7 @@ const SRRFForm: React.FC = () => {
   const api = useApi();
   const navigate = useNavigate();
 
+  // Decode token and set username and role
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -74,6 +75,49 @@ const SRRFForm: React.FC = () => {
     }
   }, [navigate]);
 
+  // Fetch requests with role-based filtering
+  const fetchRequests = useCallback(async () => {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append("Page", currentPage.toString());
+      queryParams.append("Limit", itemsPerPage.toString());
+
+      // If user is not a manager, filter requests by their name
+      if (userRole !== "RequestManager" && username) {
+        queryParams.append("Name", username);
+      }
+
+      if (searchName) queryParams.append("Name", searchName);
+      if (searchDepartment) queryParams.append("Department", searchDepartment);
+      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
+
+      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
+      const sortedData = data.sort((a, b) => new Date(b.dateNeeded).getTime() - new Date(a.dateNeeded).getTime()); // Default to newest first
+      setRequests(sortedData);
+    } catch (error) {
+      console.error("Error fetching hardware requests:", error);
+    }
+  }, [currentPage, itemsPerPage, userRole, username, searchName, searchDepartment, searchWorkstation, api]);
+
+  // Fetch hardware options for the select dropdown
+  const fetchHardwareOptions = useCallback(async () => {
+    try {
+      const data = await api.get<{ hardwareId: number; name: string }[]>("/Hardware");
+      setHardwareOptions(data.map((hw) => ({ value: hw.hardwareId.toString(), label: hw.name })));
+    } catch (error) {
+      console.error("Error fetching hardware options:", error);
+    }
+  }, [api]);
+
+  // Fetch requests and hardware options when component mounts or dependencies change
+  useEffect(() => {
+    if (username && userRole) {
+      fetchRequests();
+      fetchHardwareOptions();
+    }
+  }, [fetchRequests, fetchHardwareOptions, username, userRole]);
+
+  // Reset form data when add modal opens
   useEffect(() => {
     if (addModalOpen) {
       setFormData({
@@ -90,52 +134,13 @@ const SRRFForm: React.FC = () => {
     }
   }, [addModalOpen, username]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchRequests();
-      fetchHardwareOptions();
-    } else {
-      navigate("/login");
-    }
-  }, [searchName, searchDepartment, searchWorkstation, currentPage, navigate]);
-
-  const fetchRequests = async () => {
-    try {
-      const queryParams = new URLSearchParams();
-      queryParams.append("Page", currentPage.toString());
-      queryParams.append("Limit", itemsPerPage.toString());
-      if (searchName) queryParams.append("Name", searchName);
-      if (searchDepartment) queryParams.append("Department", searchDepartment);
-      if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
-
-      const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
-      const sortedData = data.sort((a, b) => b.requestId - a.requestId);
-      setRequests(sortedData);
-    } catch (error) {
-      console.error("Error fetching hardware requests:", error);
-    }
-  };
-  
-
-  const fetchHardwareOptions = async () => {
-    try {
-      const data = await api.get<{ hardwareId: number; name: string }[]>("/Hardware");
-      setHardwareOptions(data.map((hw) => ({ value: hw.hardwareId.toString(), label: hw.name })));
-    } catch (error) {
-      console.error("Error fetching hardware options:", error);
-    }
-  };
-
+  // Handle form submission (add/edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", formData); 
     try {
       if (editModalOpen && currentEditId) {
-        console.log("Updating request with ID:", currentEditId); 
         await api.put(`/HardwareRequest/${currentEditId}`, formData);
       } else {
-        console.log("Creating new request"); 
         await api.post("/HardwareRequest", formData);
         setRequests((prevRequests) => [formData as HardwareRequest, ...prevRequests]);
         if (requests.length % itemsPerPage === 0) {
@@ -150,11 +155,13 @@ const SRRFForm: React.FC = () => {
     }
   };
 
+  // Handle delete click
   const handleDeleteClick = (requestId: number) => {
     setRequestToDelete(requestId);
     setDeleteModalOpen(true);
   };
 
+  // Confirm delete
   const confirmDelete = async () => {
     if (requestToDelete) {
       try {
@@ -169,13 +176,19 @@ const SRRFForm: React.FC = () => {
     }
   };
 
+  // Handle sorting by date
   const handleSort = () => {
     setIsSorted(!isSorted);
     setRequests((prevRequests) =>
-      [...prevRequests].sort((a, b) => (isSorted ? a.requestId - b.requestId : b.requestId - a.requestId))
+      [...prevRequests].sort((a, b) => {
+        const dateA = new Date(a.dateNeeded).getTime();
+        const dateB = new Date(b.dateNeeded).getTime();
+        return isSorted ? dateA - dateB : dateB - dateA; // Toggle between newest and oldest
+      })
     );
   };
 
+  // Clear search filters
   const handleClearSearch = () => {
     setSearchName("");
     setSearchDepartment("");
@@ -183,9 +196,11 @@ const SRRFForm: React.FC = () => {
     fetchRequests();
   };
 
+  // Pagination and table rendering
   const totalPages = Math.ceil(requests.length / itemsPerPage);
   const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // Format date and time
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString);
     return date.toLocaleString();
@@ -197,28 +212,29 @@ const SRRFForm: React.FC = () => {
 
       {/* Search Filters */}
       {userRole === "RequestManager" && (
-      <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
-        <TextInput
-          placeholder="Search Name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Department"
-          value={searchDepartment}
-          onChange={(e) => setSearchDepartment(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Workstation"
-          value={searchWorkstation}
-          onChange={(e) => setSearchWorkstation(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <Button className={styles.searchButton} onClick={fetchRequests} style={{ flex: "none" }}>Search</Button>
-        <Button variant="outline" onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
-      </div>)}
+        <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+          <TextInput
+            placeholder="Search Name"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            style={{ flex: 1, minWidth: "150px" }}
+          />
+          <TextInput
+            placeholder="Search Department"
+            value={searchDepartment}
+            onChange={(e) => setSearchDepartment(e.target.value)}
+            style={{ flex: 1, minWidth: "150px" }}
+          />
+          <TextInput
+            placeholder="Search Workstation"
+            value={searchWorkstation}
+            onChange={(e) => setSearchWorkstation(e.target.value)}
+            style={{ flex: 1, minWidth: "150px" }}
+          />
+          <Button className={styles.searchButton} onClick={fetchRequests} style={{ flex: "none" }}>Search</Button>
+          <Button variant="outline" onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
+        </div>
+      )}
 
       <Button className={styles.addButton} onClick={() => setAddModalOpen(true)} style={{ marginBottom: "10px" }}>Add Hardware Request</Button>
 
@@ -244,57 +260,57 @@ const SRRFForm: React.FC = () => {
           <tbody>
             {paginatedRequests.map((request, index) => (
               <tr key={request.requestId}>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{index + 1}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.requestId}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{formatDateTime(request.dateNeeded)}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.name}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.department}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }}>
-                <span
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontWeight: "bold",
-                    backgroundColor:
-                      request.status === 0
-                        ? "yellow" // Pending
-                        : request.status === 1
-                        ? "green" // Approved
-                        : "red", // Rejected
-                    color: "black", // Text color
-                  }}
-                >
-                  {request.status === 0
-                    ? "Pending"
-                    : request.status === 1
-                    ? "Approved"
-                    : "Rejected"}
-                </span>
-              </td>
-              <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
-                <Button
-                  size="xs"
-                  onClick={() => {
-                    setCurrentEditId(request.requestId);
-                    const { requestId, ...rest } = request;
-                    setFormData(rest);
-                    setEditModalOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>
-                {userRole === "RequestManager" && (
-                  <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>
-                    Delete
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{index + 1}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.requestId}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{formatDateTime(request.dateNeeded)}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.name}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.department}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.workstation}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.problem}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.isFulfilled ? "Yes" : "No"}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.serialNo}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>{request.hardwareId ?? "N/A"}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                      backgroundColor:
+                        request.status === 0
+                          ? "yellow" // Pending
+                          : request.status === 1
+                          ? "green" // Approved
+                          : "red", // Rejected
+                      color: "black", // Text color
+                    }}
+                  >
+                    {request.status === 0
+                      ? "Pending"
+                      : request.status === 1
+                      ? "Approved"
+                      : "Rejected"}
+                  </span>
+                </td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }} className={styles.actionButtons}>
+                  <Button
+                    size="xs"
+                    onClick={() => {
+                      setCurrentEditId(request.requestId);
+                      const { requestId, ...rest } = request;
+                      setFormData(rest);
+                      setEditModalOpen(true);
+                    }}
+                  >
+                    Edit
                   </Button>
-                )}
-              </td>
-            </tr>
+                  {userRole === "RequestManager" && (
+                    <Button size="xs" color="red" onClick={() => handleDeleteClick(request.requestId)}>
+                      Delete
+                    </Button>
+                  )}
+                </td>
+              </tr>
             ))}
           </tbody>
         </Table>
@@ -355,16 +371,21 @@ const SRRFForm: React.FC = () => {
             <TextInput label="SerialId" value={formData.serialNo} onChange={(e) => setFormData({ ...formData, serialNo: e.target.value })} required />
           )}
           {userRole === "RequestManager" && (
-          <Select label="Status" value={formData.status.toString()} onChange={(value) => {
-            const statusValue = value ? parseInt(value) : 0;
-            setFormData({ ...formData, status: statusValue }); }}
-          data={[
-            { value: "0", label: "Pending" },
-            { value: "1", label: "Approved" },
-            { value: "2", label: "Rejected" },
-          ]}
-          required
-        /> )}
+            <Select
+              label="Status"
+              value={formData.status.toString()}
+              onChange={(value) => {
+                const statusValue = value ? parseInt(value) : 0;
+                setFormData({ ...formData, status: statusValue });
+              }}
+              data={[
+                { value: "0", label: "Pending" },
+                { value: "1", label: "Approved" },
+                { value: "2", label: "Rejected" },
+              ]}
+              required
+            />
+          )}
           <Button type="submit" style={{ marginTop: "10px" }}>{editModalOpen ? "Update" : "Submit"}</Button>
         </form>
       </Modal>

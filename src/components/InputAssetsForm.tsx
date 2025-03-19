@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { TextInput, Button, Table, Modal, Pagination, Tooltip } from "@mantine/core";
 import { IconExclamationCircle } from "@tabler/icons-react";
 import { useApi } from "../service/apiService";
@@ -14,29 +14,44 @@ type Hardware = {
   available: number;
   deployed: number;
   supplier: string;
-  totalPrice: string;
+  totalPrice: string; // Store as string for formatting
+};
+
+type SearchQuery = {
+  name: string;
+  supplier: string;
+  date: string;
 };
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
     hour12: true,
   });
+};
+
+// Function to format number with commas
+const formatMoney = (value: string): string => {
+  // Remove all non-digit characters
+  const rawValue = value.replace(/\D/g, "");
+  // Format with commas
+  return new Intl.NumberFormat().format(Number(rawValue));
+};
+
+// Function to remove commas and return raw value
+const parseMoney = (formattedValue: string): string => {
+  return formattedValue.replace(/,/g, "");
 };
 
 const InputAssetsForm: React.FC = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Hardware[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Hardware[]>([]);
-  const [searchName, setSearchName] = useState("");
-  const [searchDate, setSearchDate] = useState("");
-  const [searchSupplier, setSearchSupplier] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [currentEditAsset, setCurrentEditAsset] = useState<Hardware | null>(null);
@@ -55,18 +70,23 @@ const InputAssetsForm: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [lowStockItems, setLowStockItems] = useState<Hardware[]>([]); // State to track low stock items
-  const [userRole, setUserRole] = useState<string | null>(null); // Add state for user role
+  const [lowStockItems, setLowStockItems] = useState<Hardware[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<SearchQuery>({
+    name: "",
+    supplier: "",
+    date: "",
+  });
 
   const api = useApi();
 
   // Fetch the user role from the token
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       try {
-        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
-        const role = decodedToken.role; // Extract the role from the token
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const role = decodedToken.role;
         setUserRole(role);
       } catch (error) {
         console.error("Error decoding token:", error);
@@ -74,54 +94,86 @@ const InputAssetsForm: React.FC = () => {
     }
   }, []);
 
+  // Fetch assets from the API and sort them by hardwareId in descending order
   const fetchAssets = useCallback(async () => {
     try {
       const data = await api.get<Hardware[]>("/Hardware");
-      setAssets(data);
-      setFilteredAssets(data);
-      checkLowStockItems(data); // Check for low stock items whenever assets are fetched
+      // Sort assets by hardwareId in descending order
+      const sortedAssets = data.sort((a, b) => b.hardwareId - a.hardwareId);
+      setAssets(sortedAssets);
+      checkLowStockItems(sortedAssets);
     } catch (error) {
       console.error("Error fetching hardware:", error);
     }
   }, [api]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       fetchAssets();
     } else {
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   }, [fetchAssets]);
 
+  // Check for low stock items
   const checkLowStockItems = (assets: Hardware[]) => {
-    const lowStock = assets.filter(asset => asset.available <= 10);
+    const lowStock = assets.filter((asset) => asset.available <= 10);
     setLowStockItems(lowStock);
   };
 
-  const handleSearch = () => {
-    const filtered = assets.filter((asset) => {
-      const matchesName = asset.name.toLowerCase().includes(searchName.toLowerCase());
-      const matchesDate = asset.datePurchased.includes(searchDate);
-      const matchesSupplier = asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase());
+  // Filter assets based on search criteria
+  const filteredAssets = useMemo(() => {
+    let filtered = assets;
 
-      return matchesName && matchesDate && matchesSupplier;
-    });
-    setFilteredAssets(filtered);
-    setCurrentPage(1);
-  };
+    if (searchQuery.name) {
+      filtered = filtered.filter((asset) =>
+        asset.name.toLowerCase().includes(searchQuery.name.toLowerCase())
+      );
+    }
 
+    if (searchQuery.supplier) {
+      filtered = filtered.filter((asset) =>
+        asset.supplier.toLowerCase().includes(searchQuery.supplier.toLowerCase())
+      );
+    }
+
+    if (searchQuery.date) {
+      filtered = filtered.filter((asset) =>
+        asset.datePurchased.includes(searchQuery.date)
+      );
+    }
+
+    return filtered;
+  }, [assets, searchQuery]);
+
+  // Paginate assets
+  const paginatedAssets = useMemo(() => {
+    return filteredAssets.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredAssets, currentPage]);
+
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+
+  // Handle Edit Asset Button Click
   const handleEditClick = (asset: Hardware) => {
     setCurrentEditAsset(asset);
-    setFormData(asset);
+    setFormData({
+      ...asset,
+      totalPrice: formatMoney(asset.totalPrice), // Format totalPrice for display
+    });
     setEditModalOpen(true);
   };
 
+  // Handle Delete Asset Button Click
   const handleDeleteClick = (hardwareId: number) => {
     setAssetToDelete(hardwareId);
     setDeleteModalOpen(true);
   };
 
+  // Confirm Delete Asset
   const confirmDelete = async () => {
     if (assetToDelete) {
       try {
@@ -136,6 +188,7 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
+  // Handle Save Edit
   const handleSaveEdit = async () => {
     try {
       const updatedFormData = { ...formData };
@@ -150,6 +203,9 @@ const InputAssetsForm: React.FC = () => {
       if (updatedFormData.deployed < 0) updatedFormData.deployed = 0;
       if (updatedFormData.defective < 0) updatedFormData.defective = 0;
 
+      // Remove commas before saving
+      updatedFormData.totalPrice = parseMoney(updatedFormData.totalPrice);
+
       await api.put(`/Hardware/${formData.hardwareId}`, updatedFormData);
       setEditModalOpen(false);
       fetchAssets();
@@ -158,6 +214,7 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
+  // Handle Add Asset Button Click
   const handleAddClick = () => {
     setFormData({
       hardwareId: 0,
@@ -173,31 +230,22 @@ const InputAssetsForm: React.FC = () => {
     setAddModalOpen(true);
   };
 
+  // Handle Save Add
   const handleSaveAdd = async () => {
     try {
-      if (formData.deployed > formData.available) {
-        formData.deployed = formData.available;
-      }
+      // Remove commas before saving
+      const rawTotalPrice = parseMoney(formData.totalPrice);
+      const updatedFormData = { ...formData, totalPrice: rawTotalPrice };
 
-      if (formData.defective > formData.deployed) {
-        formData.defective = formData.deployed;
-      }
-
-      formData.available = formData.available - formData.deployed;
-      formData.deployed = formData.deployed - formData.defective;
-
-      if (formData.available < 0) formData.available = 0;
-      if (formData.deployed < 0) formData.deployed = 0;
-      if (formData.defective < 0) formData.defective = 0;
-
-      await api.post("/Hardware", formData);
+      await api.post("/Hardware", updatedFormData);
       setAddModalOpen(false);
-      fetchAssets();
+      fetchAssets(); // Refresh the assets list after adding
     } catch (error) {
       console.error("Error adding hardware:", error);
     }
   };
 
+  // Handle Increment
   const handleIncrement = (field: keyof Hardware) => {
     setFormData((prev) => {
       const newValue = (prev[field] as number) + 1;
@@ -216,6 +264,7 @@ const InputAssetsForm: React.FC = () => {
     });
   };
 
+  // Handle Decrement
   const handleDecrement = (field: keyof Hardware) => {
     setFormData((prev) => ({
       ...prev,
@@ -223,16 +272,21 @@ const InputAssetsForm: React.FC = () => {
     }));
   };
 
-  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
-  const paginatedAssets = filteredAssets.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Clear search fields
+  const handleClearSearch = () => {
+    setSearchQuery({ name: "", supplier: "", date: "" });
+  };
+
+  // Handle Total Price Input Change
+  const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatMoney(e.target.value);
+    setFormData({ ...formData, totalPrice: formattedValue });
+  };
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "100%", padding: "10px", position: "relative" }}>
-      {/* Warning Icon at the top right with Tooltip */}
-      {lowStockItems.length > 0 && (
+      {/* Warning Icon at the top right with Tooltip (Only for InventoryManager) */}
+      {userRole === "InventoryManager" && lowStockItems.length > 0 && (
         <Tooltip
           label="Warning! Some items are running low on stock"
           position="bottom"
@@ -261,32 +315,6 @@ const InputAssetsForm: React.FC = () => {
         </Tooltip>
       )}
 
-      {/* Search Bar */}
-      <div className={styles.searchContainer} style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "10px" }}>
-        <TextInput
-          placeholder="Search Name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Date Purchased"
-          type="date"
-          value={searchDate}
-          onChange={(e) => setSearchDate(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <TextInput
-          placeholder="Search Supplier"
-          value={searchSupplier}
-          onChange={(e) => setSearchSupplier(e.target.value)}
-          style={{ flex: 1, minWidth: "150px" }}
-        />
-        <Button className={styles.searchButton} onClick={handleSearch} style={{ flex: "none" }}>
-          Search
-        </Button>
-      </div>
-
       {/* Add Asset Button (Conditional Rendering) */}
       {userRole === "InventoryManager" && (
         <Button className={styles.addButton} onClick={handleAddClick} style={{ marginBottom: "10px" }}>
@@ -294,56 +322,74 @@ const InputAssetsForm: React.FC = () => {
         </Button>
       )}
 
+      {/* Search Bar */}
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <TextInput
+          placeholder="Search by name"
+          value={searchQuery.name}
+          onChange={(e) => setSearchQuery({ ...searchQuery, name: e.target.value })}
+          style={{ flex: 1, minWidth: "200px" }}
+        />
+        <TextInput
+          placeholder="Search by supplier"
+          value={searchQuery.supplier}
+          onChange={(e) => setSearchQuery({ ...searchQuery, supplier: e.target.value })}
+          style={{ flex: 1, minWidth: "200px" }}
+        />
+        <TextInput
+          type="date"
+          placeholder="Search by date"
+          value={searchQuery.date}
+          onChange={(e) => setSearchQuery({ ...searchQuery, date: e.target.value })}
+          style={{ flex: 1, minWidth: "200px" }}
+        />
+        <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
+      </div>
+
       {/* Table of Assets */}
-      <div style={{ overflowX: "auto", marginBottom: "20px" }}></div>
-      <Table className={styles.table} style={{ fontSize: "12px", marginBottom: "10px", minWidth: "1100px"  }}>
-        <thead>
-          <tr>
-            <th style={{ padding: "4px" }}>Index</th>
-            <th style={{ padding: "4px" }}>ID</th>
-            <th style={{ padding: "4px" }}>Name</th>
-            <th style={{ padding: "4px" }}>Description</th>
-            <th style={{ padding: "4px" }}>Date Purchased</th>
-            <th style={{ padding: "4px" }}>Supplier</th>
-            <th style={{padding: "4px"}}>Total Price</th>
-            <th style={{ padding: "4px" }}>Defective</th>
-            <th style={{ padding: "4px" }}>Available</th>
-            <th style={{ padding: "4px" }}>Deployed</th>
-            <th style={{ padding: "4px" }}>Total Items</th>
-            {/* Conditionally render the Actions column header */}
-            {userRole === "InventoryManager" && (
-              <th style={{ padding: "4px" }}>Actions</th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedAssets.map((hardware, index) => (
-            <tr key={hardware.hardwareId}>
-              <td style={{ padding: "4px" }}>{index + 1}</td>
-              <td style={{ padding: "4px" }}>{hardware.hardwareId}</td>
-              <td style={{ padding: "4px" }}>{hardware.name}</td>
-              <td style={{ padding: "4px" }}>{hardware.description}</td>
-              <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
-              <td style={{ padding: "4px" }}>{hardware.supplier}</td>
-              <td style={{ padding: "4px" }}>₱ {hardware.totalPrice.toLocaleString()}</td>
-              <td style={{ padding: "4px" }}>{hardware.defective}</td>
-              <td style={{ padding: "4px" }}>{hardware.available}</td>
-              <td style={{ padding: "4px" }}>{hardware.deployed}</td>
-              {/* Conditionally render the Actions column cells */}
-              {userRole === "InventoryManager" && (
-                <td style={{ padding: "4px" }} className={styles.actionButtons}>
-                  <Button size="xs" onClick={() => handleEditClick(hardware)}>
-                    Edit
-                  </Button>
-                  <Button size="xs" color="red" onClick={() => handleDeleteClick(hardware.hardwareId)}>
-                    Delete
-                  </Button>
-                </td>
-              )}
+      <div style={{ overflowX: "auto", marginBottom: "20px" }}>
+        <Table className={styles.table} style={{ fontSize: "12px", marginBottom: "10px", minWidth: "1100px" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "4px" }}>Index</th>
+              <th style={{ padding: "4px" }}>ID</th>
+              <th style={{ padding: "4px" }}>Name</th>
+              <th style={{ padding: "4px" }}>Description</th>
+              <th style={{ padding: "4px" }}>Date Purchased</th>
+              <th style={{ padding: "4px" }}>Supplier</th>
+              <th style={{ padding: "4px" }}>Total Price</th>
+              <th style={{ padding: "4px" }}>Defective</th>
+              <th style={{ padding: "4px" }}>Available</th>
+              <th style={{ padding: "4px" }}>Deployed</th>
+              {userRole === "InventoryManager" && <th style={{ padding: "4px" }}>Actions</th>}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {paginatedAssets.map((hardware, index) => (
+              <tr key={hardware.hardwareId}>
+                <td style={{ padding: "4px" }}>{index + 1}</td>
+                <td style={{ padding: "4px" }}>{hardware.hardwareId}</td>
+                <td style={{ padding: "4px" }}>{hardware.name}</td>
+                <td style={{ padding: "4px" }}>{hardware.description}</td>
+                <td style={{ padding: "4px" }}>{formatDate(hardware.datePurchased)}</td>
+                <td style={{ padding: "4px" }}>
+                  {userRole === "InventoryManager" ? hardware.supplier : "NaN"}
+                </td>
+                <td style={{ padding: "4px" }}>₱ {new Intl.NumberFormat().format(Number(hardware.totalPrice))}</td>
+                <td style={{ padding: "4px" }}>{hardware.defective}</td>
+                <td style={{ padding: "4px" }}>{hardware.available}</td>
+                <td style={{ padding: "4px" }}>{hardware.deployed}</td>
+                {userRole === "InventoryManager" && (
+                  <td style={{ padding: "4px" }} className={styles.actionButtons}>
+                    <Button size="xs" onClick={() => handleEditClick(hardware)}>Edit</Button>
+                    <Button size="xs" color="red" onClick={() => handleDeleteClick(hardware.hardwareId)}>Delete</Button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
 
       {/* Pagination */}
       <Pagination
@@ -368,7 +414,12 @@ const InputAssetsForm: React.FC = () => {
               required
             />
             <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-            <TextInput label="Total Price" value={formData.totalPrice} onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })} required />
+            <TextInput
+              label="Total Price"
+              value={formData.totalPrice}
+              onChange={handleTotalPriceChange}
+              required
+            />
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <TextInput
                 label="Defective"
@@ -382,20 +433,6 @@ const InputAssetsForm: React.FC = () => {
               />
               <Button onClick={() => handleDecrement("defective")} style={{ marginTop: "24px" }}>-</Button>
               <Button onClick={() => handleIncrement("defective")} style={{ marginTop: "24px" }}>+</Button>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <TextInput
-                label="Available"
-                type="number"
-                value={formData.available}
-                onChange={(e) => {
-                  const available = Number(e.target.value) || 0;
-                  setFormData({ ...formData, available });
-                }}
-                style={{ flex: 1 }}
-              />
-              <Button onClick={() => handleDecrement("available")} style={{ marginTop: "24px" }}>-</Button>
-              <Button onClick={() => handleIncrement("available")} style={{ marginTop: "24px" }}>+</Button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <TextInput
@@ -430,15 +467,11 @@ const InputAssetsForm: React.FC = () => {
               required
             />
             <TextInput label="Supplier" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} required />
-            <TextInput label="Total Price" value={formData.totalPrice} onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })} required />
             <TextInput
-              label="Defective"
-              type="number"
-              value={formData.defective}
-              onChange={(e) => {
-                const defective = Math.min(formData.deployed, Number(e.target.value) || 0);
-                setFormData({ ...formData, defective });
-              }}
+              label="Total Price"
+              value={formData.totalPrice}
+              onChange={handleTotalPriceChange}
+              required
             />
             <TextInput
               label="Available"
@@ -447,15 +480,6 @@ const InputAssetsForm: React.FC = () => {
               onChange={(e) => {
                 const available = Number(e.target.value) || 0;
                 setFormData({ ...formData, available });
-              }}
-            />
-            <TextInput
-              label="Deployed"
-              type="number"
-              value={formData.deployed}
-              onChange={(e) => {
-                const deployed = Math.min(formData.available, Number(e.target.value) || 0);
-                setFormData({ ...formData, deployed });
               }}
             />
             <Button onClick={handleSaveAdd}>Save</Button>
