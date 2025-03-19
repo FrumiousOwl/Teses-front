@@ -14,6 +14,8 @@ type HardwareRequest = {
   workstation: string;
   problem: string;
   isFulfilled: boolean;
+  serialNo: string;
+  status: number;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -81,80 +83,80 @@ const Report: React.FC = () => {
     doc.setFontSize(14); // Smaller title font size
     doc.text("Hardware Requests Report", 10, 10);
 
-    // Set up table headers
     const headers = [
-      "RID",
+      "Index",
+      "Request ID",
       "Date Needed",
       "Name",
       "Department",
       "Workstation",
       "Problem",
-      "Status",
+      "Is Fulfilled",
+      "Serial No",
+      "Status"
     ];
 
-    // Set up table data (use filteredRequests instead of allRequests)
-    const tableData = filteredRequests.map((request) => [
+    const statusMap = {
+      0: "Pending",
+      1: "Approved",
+      2: "Rejected",
+    };
+
+    const tableData = filteredRequests.map((request, index) => [
+      (index + 1).toString(),
       request.requestId.toString(),
-      request.dateNeeded.split("T")[0], // Format date
+      request.dateNeeded.split("T")[0],
       request.name,
       request.department,
       request.workstation,
       request.problem,
-      request.isFulfilled ? "Settled" : "On Hold", // Updated terms
+      request.isFulfilled ? "Settled" : "On Hold",
+      request.serialNo,
+      statusMap[request.status as keyof typeof statusMap],
     ]);
 
-    // Set initial position for the table
-    const startY = 20; // Start below the title
-    const rowHeight = 8; // Smaller row height
-    const colWidths = [15, 20, 30, 30, 30, 50, 15]; // Adjusted column widths to fit within the page
-    const tableWidth = colWidths.reduce((a, b) => a + b, 0); // Total table width
+    const startY = 20;
+    const rowHeight = 8; 
+    const colWidths = [15, 20, 30, 30, 30, 50, 15]; 
+    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-    // Draw table headers
-    doc.setFontSize(10); // Smaller header font size
+    doc.setFontSize(10); 
     doc.setFont("helvetica", "bold");
     headers.forEach((header, index) => {
       const x = 10 + colWidths.slice(0, index).reduce((a, b) => a + b, 0);
       const y = startY;
-      doc.text(header, x + colWidths[index] / 2, y, { align: "center" }); // Center-align headers
+      doc.text(header, x + colWidths[index] / 2, y, { align: "center" }); 
     });
 
-    // Draw table rows
-    doc.setFontSize(8); // Smaller content font size
+    doc.setFontSize(8); 
     doc.setFont("helvetica", "normal");
     tableData.forEach((row, rowIndex) => {
       row.forEach((cell, colIndex) => {
         const x = 10 + colWidths.slice(0, colIndex).reduce((a, b) => a + b, 0);
         const y = startY + (rowIndex + 1) * rowHeight;
 
-        // Draw cell borders
         doc.rect(x, y - rowHeight / 2, colWidths[colIndex], rowHeight);
 
-        // Center-align text within the cell
         doc.text(cell, x + colWidths[colIndex] / 2, y + 2, { align: "center", maxWidth: colWidths[colIndex] - 4 });
       });
     });
 
-    // Draw outer border around the table
     doc.rect(10, startY - rowHeight / 2, tableWidth, (tableData.length + 1) * rowHeight);
 
-    // Save the PDF
     doc.save("Hardware_Requests_Report.pdf");
   };
 
-  // Open export confirmation modal
   const openExportModal = () => {
     setIsExportModalOpen(true);
   };
 
-  // Close export confirmation modal
   const closeExportModal = () => {
     setIsExportModalOpen(false);
   };
 
-  // Handle export confirmation
   const handleExportConfirmation = () => {
-    exportToPDF(); // Export to PDF
-    closeExportModal(); // Close the modal
+    exportToPDF(); 
+    closeExportModal(); 
   };
 
   return (
@@ -195,6 +197,8 @@ const Report: React.FC = () => {
             <th>Department</th>
             <th>Workstation</th>
             <th>Problem</th>
+            <th>Is Fulfilled</th>
+            <th>Serial No</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -209,7 +213,30 @@ const Report: React.FC = () => {
                 <td>{request.department}</td>
                 <td>{request.workstation}</td>
                 <td>{request.problem}</td>
-                <td>{request.isFulfilled ? "Settled" : "On Hold"}</td> {/* Updated terms */}
+                <td>{request.isFulfilled ? "Settled" : "On Hold"}</td>
+                <td>{request.serialNo}</td>
+                <td style={{ padding: "6px", whiteSpace: "nowrap" }}>
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontWeight: "bold",
+                    backgroundColor:
+                      request.status === 0
+                        ? "yellow" 
+                        : request.status === 1
+                        ? "green" 
+                        : "red", 
+                    color: "black", 
+                  }}
+                >
+                  {request.status === 0
+                    ? "Pending"
+                    : request.status === 1
+                    ? "Approved"
+                    : "Rejected"}
+                </span>
+              </td>
               </tr>
             ))
           ) : (

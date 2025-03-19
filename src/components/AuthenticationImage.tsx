@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import classes from "./AuthenticationImage.module.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:5144";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export function AuthenticationImage() {
   const [username, setUsername] = useState("");

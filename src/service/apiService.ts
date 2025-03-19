@@ -76,7 +76,7 @@ class CustomAxiosWrapper {
 
 export const useApi = () => {
   const customAxios = axios.create({
-    baseURL: 'https://localhost:5144/api',
+    baseURL: 'http://localhost:5000/api',
   });
 
   customAxios.interceptors.request.use(

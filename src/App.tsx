@@ -2,7 +2,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import {Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthenticationImage } from './components/AuthenticationImage';
 import { NavbarSegmented } from './components/NavbarSegmented';
 import SRRFForm from './components/SRRFForm';
@@ -24,9 +24,7 @@ const ProtectedRoute: React.FC = () => {
 export default function App() {
   return (
     <MantineProvider>
-      {/* ✅ Ensure Notifications are included here */}
       <Notifications position="top-right" />
-      <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<AuthenticationImage />} />
@@ -45,10 +43,8 @@ export default function App() {
               <Route path="change-password" element={<ChangePassword />} />
             </Route>
           </Route>
-
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </Router>
     </MantineProvider>
   );
 }

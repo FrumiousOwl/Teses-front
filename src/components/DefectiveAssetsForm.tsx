@@ -6,7 +6,7 @@ import styles from "./DefectiveAssetsForm.module.css";
 type Asset = {
   hardwareId: number;
   name: string;
-  datePurchased: string; // Assuming this is a string in ISO format
+  datePurchased: string; 
   defective: number;
   supplier: string;
 };
@@ -17,7 +17,6 @@ interface DefectiveAssetsFormProps {
   onSelectAsset: (asset: Asset) => void;
 }
 
-// eslint-disable-next-line no-empty-pattern
 const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
   const api = useApi();
   const [activePage, setActivePage] = useState<number>(1);
@@ -35,7 +34,7 @@ const DefectiveAssetsForm: React.FC<DefectiveAssetsFormProps> = ({ }) => {
 
   const fetchDefectiveAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/defective/getAllDefectiveHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/defective/getAllDefectiveHardware");
       setAllAssets(data);
       setFilteredAssets(data);
     } catch (error) {

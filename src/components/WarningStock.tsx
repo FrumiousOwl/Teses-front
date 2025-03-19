@@ -28,7 +28,7 @@ const WarningStock: React.FC = () => {
   // Fetch available assets
   const fetchAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
       // Initially filter low stock assets
       const lowStockAssets = data.filter((asset) => asset.available <= 10);

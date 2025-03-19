@@ -34,7 +34,7 @@ const AvailableAssetsForm: React.FC = () => {
   // Fetch available assets
   async function fetchAssets() {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
       setFilteredAssets(data); // Reset filteredAssets to show all assets
     } catch (error) {
@@ -45,7 +45,7 @@ const AvailableAssetsForm: React.FC = () => {
   // Fetch input assets (AIDs only)
   const fetchInputAssets = async () => {
     try {
-      const data = await api.get<{ hardwareId: string }[]>("https://localhost:7234/api/Hardware");
+      const data = await api.get<{ hardwareId: string }[]>("http://localhost:5000/api/Hardware");
       console.log("Fetched Input Assets:", data); // Debugging
       setInputAssets(data.map((asset) => asset.hardwareId));
     } catch (error) {
