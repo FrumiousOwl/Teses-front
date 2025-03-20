@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button, Table, Pagination } from "@mantine/core";
 import { useApi } from "../service/apiService";
-import styles from "./Anomaly.module.css"; // Import your CSS module
+import styles from "./Anomaly.module.css"; // Import the enhanced CSS
 
 type AnomalyLog = {
   id: number;
@@ -17,7 +17,7 @@ const Anomaly: React.FC = () => {
   const [, setLogs] = useState<AnomalyLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AnomalyLog[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "none">("none"); // Sort order for IsAnomaly
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "none">("none");
   const itemsPerPage = 10;
 
   const api = useApi();
@@ -43,7 +43,6 @@ const Anomaly: React.FC = () => {
     }
   }, [fetchAnomalyLogs]);
 
-  // Toggle sort order for IsAnomaly
   const toggleSortOrder = () => {
     setSortOrder((prevOrder) => {
       if (prevOrder === "none") return "asc";
@@ -52,7 +51,6 @@ const Anomaly: React.FC = () => {
     });
   };
 
-  // Sort logs based on the current sort order for IsAnomaly
   const sortedLogs = [...filteredLogs].sort((a, b) => {
     if (sortOrder === "asc") {
       return a.isAnomaly === b.isAnomaly ? 0 : a.isAnomaly ? -1 : 1;
@@ -63,11 +61,10 @@ const Anomaly: React.FC = () => {
     }
   });
 
-  // Format timestamp to YYYY-MM-DD HH:MM:SS
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -83,42 +80,39 @@ const Anomaly: React.FC = () => {
   );
 
   return (
-    <div className={styles.wrapper} style={{ maxWidth: "100%", padding: "10px" }}>
-      <div style={{ overflowX: "auto", marginBottom: "20px" }}>
-        <Table
-          className={styles.table}
-          style={{ fontSize: "12px", marginBottom: "10px", minWidth: "1100px" }}
-        >
+    <div className={styles.wrapper}>
+      <div className={styles.tableWrapper}>
+        <Table className={styles.table}>
           <thead>
             <tr>
-              <th style={{ padding: "4px" }}>ID</th>
-              <th style={{ padding: "4px" }}>Email</th>
-              <th style={{ padding: "4px" }}>Role</th>
-              <th style={{ padding: "4px" }}>Entity</th>
-              <th style={{ padding: "4px" }}>Action</th>
-              <th style={{ padding: "4px" }}>IsAnomaly</th>
-              <th style={{ padding: "4px" }}>Timestamp</th>
+              <th>ID</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Entity</th>
+              <th>Action</th>
+              <th>IsAnomaly</th>
+              <th>Timestamp</th>
             </tr>
           </thead>
           <tbody>
             {paginatedLogs.map((log) => (
               <tr key={log.id}>
-                <td style={{ padding: "4px" }}>{log.id}</td>
-                <td style={{ padding: "4px" }}>{log.email}</td>
-                <td style={{ padding: "4px" }}>{log.role}</td>
-                <td style={{ padding: "4px" }}>{log.entity}</td>
-                <td style={{ padding: "4px" }}>{log.action}</td>
-                <td style={{ padding: "4px" }} className={log.isAnomaly ? styles.anomalyText : ""}>
+                <td>{log.id}</td>
+                <td>{log.email}</td>
+                <td>{log.role}</td>
+                <td>{log.entity}</td>
+                <td>{log.action}</td>
+                <td className={log.isAnomaly ? styles.anomalyText : ""}>
                   {log.isAnomaly.toString()}
                 </td>
-                <td style={{ padding: "4px" }}>{formatTimestamp(log.timestamp)}</td>
+                <td>{formatTimestamp(log.timestamp)}</td>
               </tr>
             ))}
           </tbody>
         </Table>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+      <div className={styles.paginationContainer}>
         <Pagination
           total={totalPages}
           value={currentPage}
@@ -127,9 +121,7 @@ const Anomaly: React.FC = () => {
         />
         <Button
           onClick={toggleSortOrder}
-          size="sm"
-          variant="filled" // Changed to "filled" for better visibility
-          style={{ marginLeft: "10px", backgroundColor: "#228be6", color: "white" }} // Added background color and text color
+          className={styles.sortButton}
         >
           Sort by Anomaly {sortOrder === "asc" ? "↑" : sortOrder === "desc" ? "↓" : "↕"}
         </Button>

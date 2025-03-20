@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Text, Tooltip, Loader } from '@mantine/core';
-import { IconLogout, IconAlertTriangle, IconAlertOctagon, IconUserPlus } from '@tabler/icons-react'; // Added IconUserPlus for the Register tab
+import { IconLogout, IconAlertTriangle, IconAlertOctagon, IconUserPlus, IconUser } from '@tabler/icons-react'; // Added IconUserPlus for the Register tab
 import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillPlusCircle, AiFillContainer } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
@@ -27,6 +27,7 @@ const tabs = {
     { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
     { link: '/dashboard/register', label: 'Register', icon: IconUserPlus }, // Added Register tab
+    { link: '/dashboard/user-account', label: 'UserAccounts', icon: IconUser },
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
     { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
     { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },

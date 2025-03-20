@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Table, Pagination, Button, Tooltip } from "@mantine/core";
 import { IconExclamationCircle } from "@tabler/icons-react";

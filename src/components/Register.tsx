@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-
-import { TextInput, Button, Notification, Loader } from '@mantine/core';
+import { TextInput, Button, Notification, Loader, Modal, Text, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconCheck, IconX } from '@tabler/icons-react';
 import classes from './Register.module.css'; // Ensure you have this CSS module for styling
@@ -14,10 +13,10 @@ interface RegisterFormValues {
 }
 
 const Register: React.FC = () => {
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     initialValues: {
@@ -38,7 +37,7 @@ const Register: React.FC = () => {
     setLoading(true);
     setError(null);
     setSuccess(false);
-  
+
     try {
       const response = await fetch('https://localhost:7234/api/account/Register', {
         method: 'POST',
@@ -47,14 +46,13 @@ const Register: React.FC = () => {
         },
         body: JSON.stringify(values),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Registration failed');
       }
-  
+
       setSuccess(true);
-  
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
     } finally {
@@ -62,10 +60,27 @@ const Register: React.FC = () => {
     }
   };
 
+  const openConfirmationModal = () => {
+    if (form.isValid()) {
+      setIsConfirmationModalOpen(true);
+    } else {
+      setError('Please fill out all fields correctly.');
+    }
+  };
+
+  const closeConfirmationModal = () => {
+    setIsConfirmationModalOpen(false);
+  };
+
+  const confirmRegistration = () => {
+    setIsConfirmationModalOpen(false);
+    form.onSubmit(handleSubmit)();
+  };
+
   return (
     <div className={classes.container}>
       <h1 className={classes.title}>Register</h1>
-      <form onSubmit={form.onSubmit(handleSubmit)} className={classes.form}>
+      <form onSubmit={form.onSubmit(openConfirmationModal)} className={classes.form}>
         <TextInput
           label="Username"
           placeholder="Enter your username"
@@ -108,6 +123,28 @@ const Register: React.FC = () => {
           {loading ? <Loader size="sm" /> : 'Register'}
         </Button>
       </form>
+
+      {/* Confirmation Modal */}
+      <Modal
+        opened={isConfirmationModalOpen}
+        onClose={closeConfirmationModal}
+        title="Confirm Registration"
+        centered
+      >
+        <Text>Are you sure you want to register with the following details?</Text>
+        <Text mt="sm" fw={500}>Username: {form.values.username}</Text>
+        <Text mt="sm" fw={500}>Email: {form.values.email}</Text>
+        <Text mt="sm" fw={500}>Phone Number: {form.values.phoneNumber}</Text>
+
+        <Group justify="flex-end" mt="md">
+          <Button variant="default" onClick={closeConfirmationModal}>
+            Cancel
+          </Button>
+          <Button color="green" onClick={confirmRegistration}>
+            Confirm
+          </Button>
+        </Group>
+      </Modal>
     </div>
   );
 };

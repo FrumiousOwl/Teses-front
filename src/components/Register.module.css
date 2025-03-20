@@ -1,21 +1,153 @@
+/* General Container */
 .container {
     max-width: 400px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 40px;
     text-align: center;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   }
   
+  /* Title Styling */
   .title {
-    font-size: 24px;
-    margin-bottom: 20px;
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    background: linear-gradient(90deg, #007bff, #00a8ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   
+  /* Form Styling */
   .form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
   }
   
+  /* Input Fields */
+  .mantine-TextInput-input {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .mantine-TextInput-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+  }
+  
+  .mantine-TextInput-label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+  }
+  
+  /* Submit Button */
   .submitButton {
+    margin-top: 25px;
+    background: linear-gradient(135deg, #007bff, #00a8ff);
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+  }
+  
+  .submitButton:hover {
+    background: linear-gradient(135deg, #0056b3, #007bff);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 123, 255, 0.3);
+  }
+  
+  .submitButton:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+  }
+  
+  .submitButton:disabled {
+    background: linear-gradient(135deg, #adb5bd, #868e96);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Notifications */
+  .mantine-Notification-root {
     margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mantine-Notification-icon {
+    margin-right: 10px;
+  }
+  
+  /* Confirmation Modal */
+  .mantine-Modal-content {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mantine-Modal-header {
+    background: linear-gradient(135deg, #007bff, #00a8ff);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 16px;
+  }
+  
+  .mantine-Modal-title {
+    font-weight: 600;
+    font-size: 18px;
+  }
+  
+  .mantine-Modal-body {
+    padding: 20px;
+  }
+  
+  .mantine-Text-root {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .mantine-Button-root {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .mantine-Button-root:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+  }
+  
+  .mantine-Button-root:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 480px) {
+    .container {
+      padding: 20px;
+    }
+  
+    .title {
+      font-size: 24px;
+    }
+  
+    .submitButton {
+      padding: 10px 16px;
+    }
+  
+    .mantine-TextInput-input {
+      padding: 10px;
+    }
   }

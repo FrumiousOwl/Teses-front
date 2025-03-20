@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { TextInput, Table, Pagination, Button } from "@mantine/core";
 import { useApi } from "../service/apiService";
@@ -125,7 +126,7 @@ const DefectiveAssetsForm: React.FC = () => {
         <thead>
           <tr>
             <th>Index</th>
-            <th>ID</th>
+            <th>Harware ID</th>
             <th>Name</th>
             <th>Date Purchased</th>
             <th>Defective</th>
