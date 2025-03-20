@@ -24,8 +24,8 @@ const Anomaly: React.FC = () => {
 
   const fetchAnomalyLogs = useCallback(async () => {
     try {
-      const url = `https://localhost:7234/api/anomalyDetector/logs`;
-      const data = await api.get<AnomalyLog[]>(url);
+      const url = `http://localhost:5000/api/anomalyDetector/logs`;
+      const data = await api.get<AnomalyLog[]>(url);``
 
       setLogs(data);
       setFilteredLogs(data);

@@ -24,7 +24,6 @@ const DefectiveAssetsForm: React.FC = () => {
   const [searchSupplier, setSearchSupplier] = useState<string>("");
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Fetch defective assets when component mounts
   useEffect(() => {
     fetchDefectiveAssets();
     fetchUserRole();
@@ -32,7 +31,7 @@ const DefectiveAssetsForm: React.FC = () => {
 
   const fetchDefectiveAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/defective/getAllDefectiveHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/defective/getAllDefectiveHardware");
       setAllAssets(data);
       setFilteredAssets(data);
     } catch (error) {
@@ -40,7 +39,6 @@ const DefectiveAssetsForm: React.FC = () => {
     }
   };
 
-  // Fetch user role from token
   const fetchUserRole = () => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -54,7 +52,6 @@ const DefectiveAssetsForm: React.FC = () => {
     }
   };
 
-  // Handle search filtering automatically as the user types
   useEffect(() => {
     const searched = allAssets.filter(
       (asset) =>
@@ -63,10 +60,9 @@ const DefectiveAssetsForm: React.FC = () => {
         asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase())
     );
     setFilteredAssets(searched);
-    setActivePage(1); // Reset to the first page when search criteria change
+    setActivePage(1); 
   }, [allAssets, searchName, searchDate, searchSupplier]);
 
-  // Format date to "M/D/YYYY, h:mm:ss A"
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
@@ -80,14 +76,12 @@ const DefectiveAssetsForm: React.FC = () => {
     });
   };
 
-  // Clear search fields
   const handleClearSearch = () => {
     setSearchName("");
     setSearchDate("");
     setSearchSupplier("");
   };
 
-  // Paginate assets
   const paginatedAssets = filteredAssets.slice(
     (activePage - 1) * ITEMS_PER_PAGE,
     activePage * ITEMS_PER_PAGE
@@ -97,7 +91,6 @@ const DefectiveAssetsForm: React.FC = () => {
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px" }}>
       <h3 className={styles.title}>Defective Hardware</h3>
 
-      {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
         <TextInput
           placeholder="Search Name"
@@ -121,7 +114,6 @@ const DefectiveAssetsForm: React.FC = () => {
         <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
       </div>
 
-      {/* 📋 Table of Defective Assets */}
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
@@ -153,7 +145,6 @@ const DefectiveAssetsForm: React.FC = () => {
         </tbody>
       </Table>
 
-      {/* Pagination */}
       <Pagination
         total={Math.ceil(filteredAssets.length / ITEMS_PER_PAGE)}
         value={activePage}

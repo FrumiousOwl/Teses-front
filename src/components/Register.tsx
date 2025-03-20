@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { TextInput, Button, Notification, Loader, Modal, Text, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconCheck, IconX } from '@tabler/icons-react';
-import classes from './Register.module.css'; // Ensure you have this CSS module for styling
+import classes from './Register.module.css';
 
 interface RegisterFormValues {
   username: string;
@@ -39,7 +38,7 @@ const Register: React.FC = () => {
     setSuccess(false);
 
     try {
-      const response = await fetch('https://localhost:7234/api/account/Register', {
+      const response = await fetch('http://localhost:5000/api/account/Register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

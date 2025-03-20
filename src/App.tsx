@@ -2,7 +2,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css'; // Import notifications styles
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications'; // Import Notifications
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthenticationImage } from './components/AuthenticationImage';
 import { NavbarSegmented } from './components/NavbarSegmented';
 import SRRFForm from './components/SRRFForm';
@@ -28,7 +28,6 @@ export default function App() {
     <MantineProvider>
       {/* Notifications component at the root level */}
       <Notifications position="top-right" />
-      <Router>
         <Routes>
           {/* Redirect root path to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -57,7 +56,6 @@ export default function App() {
           {/* Fallback route for unmatched paths */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </Router>
     </MantineProvider>
   );
 }

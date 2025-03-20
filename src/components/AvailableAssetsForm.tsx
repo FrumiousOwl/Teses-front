@@ -28,36 +28,32 @@ const AvailableAssetsForm: React.FC = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [lowStockItems, setLowStockItems] = useState<Asset[]>([]);
 
-  // Fetch data when component mounts
   useEffect(() => {
     fetchAssets();
     fetchInputAssets();
     fetchUserRole();
   }, []);
 
-  // Fetch available assets
   const fetchAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
-      setFilteredAssets(data); // Initialize filteredAssets with all assets
-      checkLowStockItems(data); // Check for low stock items
+      setFilteredAssets(data);
+      checkLowStockItems(data);
     } catch (error) {
       console.error("Error fetching available hardware:", error);
     }
   };
 
-  // Fetch input assets (AIDs only)
   const fetchInputAssets = async () => {
     try {
-      const data = await api.get<{ hardwareId: string }[]>("https://localhost:7234/api/Hardware");
+      const data = await api.get<{ hardwareId: string }[]>("hhttp://localhost:5000/api/Hardware");
       setInputAssets(data.map((asset) => asset.hardwareId));
     } catch (error) {
       console.error("Error fetching input assets:", error);
     }
   };
 
-  // Fetch user role from token
   const fetchUserRole = () => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -71,34 +67,28 @@ const AvailableAssetsForm: React.FC = () => {
     }
   };
 
-  // Check for low stock items
   const checkLowStockItems = (assets: Asset[]) => {
     const lowStock = assets.filter((asset) => asset.available <= 10);
     setLowStockItems(lowStock);
   };
 
-  // Handle search filtering automatically as the user types
   useEffect(() => {
     const filtered = allAssets.filter((asset) => {
-      // Exclude assets that are in inputAssets
       if (inputAssets.includes(asset.hardwareId.toString())) {
         return false;
       }
 
-      // Apply search filters
       const matchesName = asset.name.toLowerCase().includes(searchName.toLowerCase());
       const matchesDate = asset.datePurchased.includes(searchDate);
       const matchesSupplier = asset.supplier.toLowerCase().includes(searchSupplier.toLowerCase());
 
-      // Return true only if all search criteria are met
       return matchesName && matchesDate && matchesSupplier;
     });
 
     setFilteredAssets(filtered);
-    setActivePage(1); // Reset to the first page when search criteria change
+    setActivePage(1);
   }, [allAssets, inputAssets, searchName, searchDate, searchSupplier]);
 
-  // Format date to "M/D/YYYY, h:mm:ss A"
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
@@ -112,14 +102,12 @@ const AvailableAssetsForm: React.FC = () => {
     });
   };
 
-  // Clear search fields
   const handleClearSearch = () => {
     setSearchName("");
     setSearchDate("");
     setSearchSupplier("");
   };
 
-  // Paginate assets
   const paginatedAssets = filteredAssets.slice(
     (activePage - 1) * ITEMS_PER_PAGE,
     activePage * ITEMS_PER_PAGE
@@ -127,7 +115,6 @@ const AvailableAssetsForm: React.FC = () => {
 
   return (
     <div className={styles.wrapper} style={{ maxWidth: "2000px", padding: "20px", position: "relative" }}>
-      {/* Warning Icon at the top right with Tooltip (Only for InventoryManager) */}
       {userRole === "InventoryManager" && lowStockItems.length > 0 && (
         <Tooltip
           label="Warning! Some items are running low on stock"
@@ -158,7 +145,6 @@ const AvailableAssetsForm: React.FC = () => {
 
       <h3 className={styles.title}>Available Hardware</h3>
 
-      {/* 🔍 Search Bar */}
       <div className={styles.searchContainer} style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
         <TextInput
           placeholder="Search Name"
@@ -182,7 +168,6 @@ const AvailableAssetsForm: React.FC = () => {
         <Button onClick={handleClearSearch} style={{ flex: "none" }}>Clear</Button>
       </div>
 
-      {/* 📋 Table of Available Assets */}
       <Table className={styles.table} style={{ fontSize: "9px" }}>
         <thead>
           <tr>
@@ -216,7 +201,6 @@ const AvailableAssetsForm: React.FC = () => {
         </tbody>
       </Table>
 
-      {/* Pagination */}
       <Pagination
         total={Math.ceil(filteredAssets.length / ITEMS_PER_PAGE)}
         value={activePage}

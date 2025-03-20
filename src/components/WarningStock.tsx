@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
-import { TextInput, Table, Pagination, Button } from "@mantine/core"; // Import Button from Mantine
+import { TextInput, Table, Pagination, Button } from "@mantine/core"; 
 import { useApi } from "../service/apiService";
 import styles from "./WarningStock.module.css";
 
@@ -20,17 +19,14 @@ const WarningStock: React.FC = () => {
   const [searchId, setSearchId] = useState<string>("");
   const [searchName, setSearchName] = useState<string>("");
 
-  // Fetch data when component mounts
   useEffect(() => {
     fetchAssets();
   }, []);
 
-  // Fetch available assets
   const fetchAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("https://localhost:7234/api/Hardware/available/getAllAvailableHardware");
+      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/available/getAllAvailableHardware");
       setAllAssets(data);
-      // Initially filter low stock assets
       const lowStockAssets = data.filter((asset) => asset.available <= 10);
       setFilteredAssets(lowStockAssets);
     } catch (error) {
@@ -38,19 +34,17 @@ const WarningStock: React.FC = () => {
     }
   };
 
-  // Handle search filtering
   useEffect(() => {
     const searched = allAssets.filter(
       (asset) =>
-        asset.available <= 10 && // Ensure only low stock assets are included
+        asset.available <= 10 && 
         asset.name.toLowerCase().includes(searchName.toLowerCase()) &&
         asset.hardwareId.toString().includes(searchId)
     );
     setFilteredAssets(searched);
-    setActivePage(1); // Reset to the first page when search criteria change
+    setActivePage(1);
   }, [allAssets, searchId, searchName]);
 
-  // Handle clear search
   const handleClearSearch = () => {
     setSearchId("");
     setSearchName("");
@@ -59,7 +53,6 @@ const WarningStock: React.FC = () => {
     setActivePage(1);
   };
 
-  // Paginate assets
   const paginatedAssets = filteredAssets.slice(
     (activePage - 1) * ITEMS_PER_PAGE,
     activePage * ITEMS_PER_PAGE
@@ -85,7 +78,7 @@ const WarningStock: React.FC = () => {
         />
         <Button
           onClick={handleClearSearch}
-          color="blue" // Set the button color to blue
+          color="blue"
           style={{ flex: "none" }}
         >
           Clear

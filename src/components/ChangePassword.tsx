@@ -4,7 +4,7 @@ import { Box, Button, PasswordInput, Group, Modal, Text } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useApi } from "../service/apiService";
-import styles from "./ChangePassword.module.css";
+import styles from "./ChangePassword.module.css"; // ✅ Import CSS module
 
 export default function ChangePassword() {
   const api = useApi();
@@ -20,24 +20,19 @@ export default function ChangePassword() {
     validate: {
       currentPassword: (value) =>
         value.length < 6 ? "Current password must be at least 6 characters" : null,
-      newPassword: (value, values) =>
-        value === values.currentPassword
-          ? "New password cannot be the same as the current password"
-          : value.length < 6
-          ? "New password must be at least 6 characters"
-          : null,
+      newPassword: (value) =>
+        value.length < 6 ? "New password must be at least 6 characters" : null,
       confirmPassword: (value, values) =>
         value !== values.newPassword ? "Passwords do not match" : null,
     },
   });
 
   const handleSubmit = async (values: typeof form.values) => {
-    setIsLoading(true);
-
     try {
+      setIsLoading(true);
       console.log("Submitting form with values:", values);
 
-      const response = await api.post<{ currentPassword: string; newPassword: string }, string>(
+      const response = await api.post<{ currentPassword: string; newPassword: string }, any>(
         "/account/change-password",
         {
           currentPassword: values.currentPassword,
@@ -47,18 +42,18 @@ export default function ChangePassword() {
 
       console.log("API Response:", response);
 
-      // ✅ Correct response check
-      if (response === "Password changed successfully") {
+      if (response && typeof response === "string" && response.includes("Password changed successfully")) {
+        console.log("Password change successful");
+
         notifications.show({
           title: "Success",
           message: "Your password has been successfully changed!",
           color: "green",
-          autoClose: 3000,
         });
 
-        form.reset(); // Reset the form after success
+        form.reset();
       } else {
-        throw new Error(response || "Unexpected response from server.");
+        throw new Error("Unexpected API response: " + JSON.stringify(response));
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -67,7 +62,6 @@ export default function ChangePassword() {
         title: "Error",
         message: error instanceof Error ? error.message : "Failed to change password. Please try again.",
         color: "red",
-        autoClose: 4000,
       });
     } finally {
       setIsLoading(false);
@@ -75,15 +69,7 @@ export default function ChangePassword() {
   };
 
   const openConfirmationModal = () => {
-    if (form.isValid()) {
-      setIsModalOpen(true);
-    } else {
-      notifications.show({
-        title: "Validation Error",
-        message: "Please fill out all fields correctly.",
-        color: "red",
-      });
-    }
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
@@ -137,7 +123,7 @@ export default function ChangePassword() {
         </Group>
       </form>
 
-      {/* Confirmation Modal */}
+      {/* ✅ Confirmation Modal */}
       <Modal opened={isModalOpen} onClose={closeModal} title="Confirm Password Change" centered>
         <Text className={styles.modalText}>Are you sure you want to change your password?</Text>
 

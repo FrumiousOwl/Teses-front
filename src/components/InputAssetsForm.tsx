@@ -14,7 +14,7 @@ type Hardware = {
   available: number;
   deployed: number;
   supplier: string;
-  totalPrice: string; // Store as string for formatting
+  totalPrice: string; 
 };
 
 type SearchQuery = {
@@ -36,15 +36,11 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-// Function to format number with commas
 const formatMoney = (value: string): string => {
-  // Remove all non-digit characters
   const rawValue = value.replace(/\D/g, "");
-  // Format with commas
   return new Intl.NumberFormat().format(Number(rawValue));
 };
 
-// Function to remove commas and return raw value
 const parseMoney = (formattedValue: string): string => {
   return formattedValue.replace(/,/g, "");
 };
@@ -80,7 +76,6 @@ const InputAssetsForm: React.FC = () => {
 
   const api = useApi();
 
-  // Fetch the user role from the token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -94,11 +89,9 @@ const InputAssetsForm: React.FC = () => {
     }
   }, []);
 
-  // Fetch assets from the API and sort them by hardwareId in descending order
   const fetchAssets = useCallback(async () => {
     try {
       const data = await api.get<Hardware[]>("/Hardware");
-      // Sort assets by hardwareId in descending order
       const sortedAssets = data.sort((a, b) => b.hardwareId - a.hardwareId);
       setAssets(sortedAssets);
       checkLowStockItems(sortedAssets);
@@ -116,13 +109,11 @@ const InputAssetsForm: React.FC = () => {
     }
   }, [fetchAssets]);
 
-  // Check for low stock items
   const checkLowStockItems = (assets: Hardware[]) => {
     const lowStock = assets.filter((asset) => asset.available <= 10);
     setLowStockItems(lowStock);
   };
 
-  // Filter assets based on search criteria
   const filteredAssets = useMemo(() => {
     let filtered = assets;
 
@@ -147,7 +138,6 @@ const InputAssetsForm: React.FC = () => {
     return filtered;
   }, [assets, searchQuery]);
 
-  // Paginate assets
   const paginatedAssets = useMemo(() => {
     return filteredAssets.slice(
       (currentPage - 1) * itemsPerPage,
@@ -157,23 +147,20 @@ const InputAssetsForm: React.FC = () => {
 
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
 
-  // Handle Edit Asset Button Click
   const handleEditClick = (asset: Hardware) => {
     setCurrentEditAsset(asset);
     setFormData({
       ...asset,
-      totalPrice: formatMoney(asset.totalPrice), // Format totalPrice for display
+      totalPrice: formatMoney(asset.totalPrice),
     });
     setEditModalOpen(true);
   };
 
-  // Handle Delete Asset Button Click
   const handleDeleteClick = (hardwareId: number) => {
     setAssetToDelete(hardwareId);
     setDeleteModalOpen(true);
   };
 
-  // Confirm Delete Asset
   const confirmDelete = async () => {
     if (assetToDelete) {
       try {
@@ -188,7 +175,6 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
-  // Handle Save Edit
   const handleSaveEdit = async () => {
     try {
       const updatedFormData = { ...formData };
@@ -203,7 +189,6 @@ const InputAssetsForm: React.FC = () => {
       if (updatedFormData.deployed < 0) updatedFormData.deployed = 0;
       if (updatedFormData.defective < 0) updatedFormData.defective = 0;
 
-      // Remove commas before saving
       updatedFormData.totalPrice = parseMoney(updatedFormData.totalPrice);
 
       await api.put(`/Hardware/${formData.hardwareId}`, updatedFormData);
@@ -214,7 +199,6 @@ const InputAssetsForm: React.FC = () => {
     }
   };
 
-  // Handle Add Asset Button Click
   const handleAddClick = () => {
     setFormData({
       hardwareId: 0,
@@ -230,22 +214,19 @@ const InputAssetsForm: React.FC = () => {
     setAddModalOpen(true);
   };
 
-  // Handle Save Add
   const handleSaveAdd = async () => {
     try {
-      // Remove commas before saving
       const rawTotalPrice = parseMoney(formData.totalPrice);
       const updatedFormData = { ...formData, totalPrice: rawTotalPrice };
 
       await api.post("/Hardware", updatedFormData);
       setAddModalOpen(false);
-      fetchAssets(); // Refresh the assets list after adding
+      fetchAssets(); 
     } catch (error) {
       console.error("Error adding hardware:", error);
     }
   };
 
-  // Handle Increment
   const handleIncrement = (field: keyof Hardware) => {
     setFormData((prev) => {
       const newValue = (prev[field] as number) + 1;
@@ -264,7 +245,6 @@ const InputAssetsForm: React.FC = () => {
     });
   };
 
-  // Handle Decrement
   const handleDecrement = (field: keyof Hardware) => {
     setFormData((prev) => ({
       ...prev,
@@ -272,12 +252,10 @@ const InputAssetsForm: React.FC = () => {
     }));
   };
 
-  // Clear search fields
   const handleClearSearch = () => {
     setSearchQuery({ name: "", supplier: "", date: "" });
   };
 
-  // Handle Total Price Input Change
   const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedValue = formatMoney(e.target.value);
     setFormData({ ...formData, totalPrice: formattedValue });

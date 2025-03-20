@@ -11,10 +11,10 @@ import {
 } from "@mantine/core";
 import classes from "./AuthenticationImage.module.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:7234";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export function AuthenticationImage() {
-  const [username, setUsername] = useState(""); // ✅ Use 'username' instead of 'email'
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

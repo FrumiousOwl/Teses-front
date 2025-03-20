@@ -44,24 +44,20 @@ export function NavbarSegmented() {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch the user's role and username from the token
   useEffect(() => {
     const token = localStorage.getItem('token');
 
     if (token) {
       try {
-        // Decode the token to get the user's role and username
-        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token
-        console.log("Decoded Token:", decodedToken); // Debugging
+        const decodedToken = JSON.parse(atob(token.split('.')[1])); 
+        console.log("Decoded Token:", decodedToken);
 
-        // Set the username from the token's given_name field
         if (decodedToken.given_name) {
           setUsername(decodedToken.given_name);
         } else {
           console.error("given_name not found in token");
         }
 
-        // Set the role from the token's role field
         if (decodedToken.role) {
           setUserRole(decodedToken.role);
         } else {
@@ -69,22 +65,21 @@ export function NavbarSegmented() {
         }
       } catch (error) {
         console.error("Error decoding token:", error);
-        navigate('/login'); // Redirect to login if token is invalid
+        navigate('/login');
       } finally {
         setLoading(false);
       }
     } else {
-      navigate('/login'); // Redirect to login if no token is found
+      navigate('/login');
     }
   }, [navigate]);
 
   const handleLogout = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    localStorage.removeItem('token'); // Clear the token
-    navigate('/'); // Redirect to the home page
+    localStorage.removeItem('token');
+    navigate('/'); 
   };
 
-  // Get the tabs based on the user's role
   const getTabsForRole = () => {
     switch (userRole) {
       case 'User':

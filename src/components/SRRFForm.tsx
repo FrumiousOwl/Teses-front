@@ -51,7 +51,6 @@ const SRRFForm: React.FC = () => {
   const api = useApi();
   const navigate = useNavigate();
 
-  // Decode token and set username and role
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -75,14 +74,12 @@ const SRRFForm: React.FC = () => {
     }
   }, [navigate]);
 
-  // Fetch requests with role-based filtering
   const fetchRequests = useCallback(async () => {
     try {
       const queryParams = new URLSearchParams();
       queryParams.append("Page", currentPage.toString());
       queryParams.append("Limit", itemsPerPage.toString());
 
-      // If user is not a manager, filter requests by their name
       if (userRole !== "RequestManager" && username) {
         queryParams.append("Name", username);
       }
@@ -92,14 +89,13 @@ const SRRFForm: React.FC = () => {
       if (searchWorkstation) queryParams.append("Workstation", searchWorkstation);
 
       const data = await api.get<HardwareRequest[]>(`/HardwareRequest?${queryParams.toString()}`);
-      const sortedData = data.sort((a, b) => new Date(b.dateNeeded).getTime() - new Date(a.dateNeeded).getTime()); // Default to newest first
+      const sortedData = data.sort((a, b) => new Date(b.dateNeeded).getTime() - new Date(a.dateNeeded).getTime());
       setRequests(sortedData);
     } catch (error) {
       console.error("Error fetching hardware requests:", error);
     }
   }, [currentPage, itemsPerPage, userRole, username, searchName, searchDepartment, searchWorkstation, api]);
 
-  // Fetch hardware options for the select dropdown
   const fetchHardwareOptions = useCallback(async () => {
     try {
       const data = await api.get<{ hardwareId: number; name: string }[]>("/Hardware");
@@ -109,7 +105,6 @@ const SRRFForm: React.FC = () => {
     }
   }, [api]);
 
-  // Fetch requests and hardware options when component mounts or dependencies change
   useEffect(() => {
     if (username && userRole) {
       fetchRequests();
@@ -117,7 +112,6 @@ const SRRFForm: React.FC = () => {
     }
   }, [fetchRequests, fetchHardwareOptions, username, userRole]);
 
-  // Reset form data when add modal opens
   useEffect(() => {
     if (addModalOpen) {
       setFormData({
@@ -134,7 +128,6 @@ const SRRFForm: React.FC = () => {
     }
   }, [addModalOpen, username]);
 
-  // Handle form submission (add/edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -155,13 +148,11 @@ const SRRFForm: React.FC = () => {
     }
   };
 
-  // Handle delete click
   const handleDeleteClick = (requestId: number) => {
     setRequestToDelete(requestId);
     setDeleteModalOpen(true);
   };
 
-  // Confirm delete
   const confirmDelete = async () => {
     if (requestToDelete) {
       try {
@@ -176,19 +167,17 @@ const SRRFForm: React.FC = () => {
     }
   };
 
-  // Handle sorting by date
   const handleSort = () => {
     setIsSorted(!isSorted);
     setRequests((prevRequests) =>
       [...prevRequests].sort((a, b) => {
         const dateA = new Date(a.dateNeeded).getTime();
         const dateB = new Date(b.dateNeeded).getTime();
-        return isSorted ? dateA - dateB : dateB - dateA; // Toggle between newest and oldest
+        return isSorted ? dateA - dateB : dateB - dateA; 
       })
     );
   };
 
-  // Clear search filters
   const handleClearSearch = () => {
     setSearchName("");
     setSearchDepartment("");
@@ -196,11 +185,9 @@ const SRRFForm: React.FC = () => {
     fetchRequests();
   };
 
-  // Pagination and table rendering
   const totalPages = Math.ceil(requests.length / itemsPerPage);
   const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Format date and time
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString);
     return date.toLocaleString();
@@ -278,11 +265,11 @@ const SRRFForm: React.FC = () => {
                       fontWeight: "bold",
                       backgroundColor:
                         request.status === 0
-                          ? "yellow" // Pending
+                          ? "yellow" 
                           : request.status === 1
-                          ? "green" // Approved
-                          : "red", // Rejected
-                      color: "black", // Text color
+                          ? "green" 
+                          : "red", 
+                      color: "black",
                     }}
                   >
                     {request.status === 0
