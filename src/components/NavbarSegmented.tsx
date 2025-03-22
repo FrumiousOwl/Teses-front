@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Text, Tooltip, Loader } from '@mantine/core';
-import { IconLogout, IconAlertTriangle, IconAlertOctagon, IconUserPlus, IconUser } from '@tabler/icons-react'; // Added IconUserPlus for the Register tab
+import { IconLogout, IconAlertTriangle, IconAlertOctagon, IconUserPlus, IconUser, IconKey, IconMail } from '@tabler/icons-react'; // Added IconUserPlus for the Register tab
 import { AiFillDatabase, AiFillCheckCircle, AiFillCloseCircle, AiFillPlusCircle, AiFillContainer } from 'react-icons/ai';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import classes from './NavbarSegmented.module.css';
 
-// Define the tabs for each role
 const tabs = {
   User: [
     { link: '/dashboard/hardwareRequest', label: 'SRRF', icon: AiFillDatabase },
@@ -26,13 +25,11 @@ const tabs = {
   SystemManager: [
     { link: '/dashboard/anomaly', label: 'Anomaly', icon: IconAlertOctagon },
     { link: '/dashboard/srrf', label: 'SRRF', icon: AiFillDatabase },
-    { link: '/dashboard/register', label: 'Register', icon: IconUserPlus }, // Added Register tab
-    { link: '/dashboard/user-account', label: 'UserAccounts', icon: IconUser },
+    { link: '/dashboard/register', label: 'Register', icon: IconUserPlus },
+    { link: '/dashboard/reset-password', label: 'Reset Password', icon: IconKey },
+    { link: '/dashboard/user-account', label: 'User Roles', icon: IconUser },
     { link: '/dashboard/input-assets', label: 'Input Assets', icon: AiFillPlusCircle },
-    { link: '/dashboard/available-assets', label: 'Available Assets', icon: AiFillCheckCircle },
-    { link: '/dashboard/defective-assets', label: 'Defective Assets', icon: AiFillCloseCircle },
-    { link: '/dashboard/warning-stock', label: 'Stock Warning', icon: IconAlertTriangle },
-    { link: '/dashboard/report', label: 'Report', icon: AiFillContainer },
+    { link: '/dashboard/user-email', label: 'User Accounts', icon: IconMail },
   ],
 };
 

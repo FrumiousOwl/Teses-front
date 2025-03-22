@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Box, Button, PasswordInput, Group, Modal, Text } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useApi } from "../service/apiService";
-import styles from "./ChangePassword.module.css"; // ✅ Import CSS module
+import styles from "./ChangePassword.module.css"; 
 
 export default function ChangePassword() {
   const api = useApi();
