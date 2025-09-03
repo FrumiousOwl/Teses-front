@@ -49,7 +49,7 @@ const UserAccount: React.FC = () => {
       const token = localStorage.getItem('token'); // Get the token from localStorage
 
       // Fetch all users from /api/User
-      const usersResponse = await fetch('http://localhost:5000/api/User', {
+      const usersResponse = await fetch('https://localhost:5000/api/User', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ const UserAccount: React.FC = () => {
       const usersData: ApiUser[] = await usersResponse.json();
 
       // Fetch user roles from /api/user-role/all
-      const rolesResponse = await fetch('http://localhost:5000/api/user-role/all', {
+      const rolesResponse = await fetch('https://localhost:5000/api/user-role/all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const UserAccount: React.FC = () => {
     if (window.confirm('Are you sure you want to remove this user?')) {
       try {
         const token = localStorage.getItem('token'); // Get the token from localStorage
-        const response = await fetch(`http://localhost:5000/api/User/${userId}`, {
+        const response = await fetch(`https://localhost:5000/api/User/${userId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ const UserAccount: React.FC = () => {
         newRole: newRole, // Use the selected role name
       };
 
-      const response = await fetch('http://localhost:5000/api/user-role/update', {
+      const response = await fetch('https://localhost:5000/api/user-role/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -27,19 +27,14 @@ const ProtectedRoute: React.FC = () => {
 export default function App() {
   return (
     <MantineProvider>
-      {/* Notifications component at the root level */}
       <Notifications position="top-right" />
         <Routes>
-          {/* Redirect root path to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-
-          {/* Login route */}
           <Route path="/login" element={<AuthenticationImage />} />
-
-          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
+
             <Route path="/dashboard" element={<NavbarSegmented />}>
-              <Route index element={<Navigate to="srrf" replace />} /> {/* Default nested route */}
+              <Route index element={<Navigate to="srrf" replace />} />
               <Route path="srrf" element={<SRRFForm />} />
               <Route path="hardwareRequest" element={<SRRFFormForUser />} />
               <Route path="input-assets" element={<InputAssetsForm />} />
@@ -56,7 +51,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Fallback route for unmatched paths */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     </MantineProvider>

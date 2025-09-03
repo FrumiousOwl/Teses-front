@@ -21,7 +21,7 @@ const ResetPassword: React.FC = () => {
     try {
       // Simulate an API call to reset the password
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/account/reset-password", {
+      const response = await fetch("https://localhost:5000/api/account/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -37,7 +37,7 @@ const Email: React.FC = () => {
     try {
       const token = localStorage.getItem('token'); 
 
-      const usersResponse = await fetch('http://localhost:5000/api/User', {
+      const usersResponse = await fetch('https://localhost:5000/api/User', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ const Email: React.FC = () => {
         phoneNumber: newPhoneNumber,
       };
 
-      const response = await fetch(`http://localhost:5000/api/User/${selectedUser.userId}`, {
+      const response = await fetch(`https://localhost:5000/api/User/${selectedUser.userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

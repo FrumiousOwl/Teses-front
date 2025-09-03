@@ -31,7 +31,7 @@ const DefectiveAssetsForm: React.FC = () => {
 
   const fetchDefectiveAssets = async () => {
     try {
-      const data = await api.get<Asset[]>("http://localhost:5000/api/Hardware/defective/getAllDefectiveHardware");
+      const data = await api.get<Asset[]>("https://localhost:5000/api/Hardware/defective/getAllDefectiveHardware");
       setAllAssets(data);
       setFilteredAssets(data);
     } catch (error) {
